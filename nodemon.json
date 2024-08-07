@@ -1,0 +1,6 @@
+{
+	"watch": ["src/", "package.json", "rollup.config.js", "tsconfig.json", "nodemon.json"],
+	"ext": "*",
+	"exec": "npm run build && npm run start",
+	"delay": "500"
+}

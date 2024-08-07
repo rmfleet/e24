@@ -1,0 +1,151 @@
+{
+	"ignorePatterns": [
+		"node_modules/",
+		"dist/"
+	],
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/eslint-recommended",
+		"plugin:@typescript-eslint/recommended"
+	],
+	"env": {
+		"browser": true,
+		"node": true,
+		"es2022": true
+	},
+	"plugins": [
+		"@typescript-eslint",
+		"import-newlines"
+	],
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaVersion": "latest",
+		"sourceType": "module"
+	},
+	"rules": {
+		"@typescript-eslint/explicit-function-return-type": "error",
+		"@typescript-eslint/no-unused-vars": "warn",
+
+		"linebreak-style": ["error", "unix"],
+		"semi": ["error", "always"],
+		"quotes": ["error", "double"],
+		"no-trailing-spaces": "error",
+		"comma-dangle": ["error", "never"],
+		"no-mixed-spaces-and-tabs": "error",
+		"space-in-parens": ["error", "never"],
+		"indent": ["error", "tab", { "SwitchCase": 1 }],
+		"max-len": ["error", { "code": 120 }],
+		"max-lines": ["error", { "max": 1000, "skipBlankLines": true, "skipComments": true }],
+		"max-depth": ["error", 4],
+		"max-lines-per-function": ["error", { "max": 100, "skipBlankLines": true, "skipComments": true }],
+		"max-params": ["error", 4],
+		"no-console": ["warn", { "allow": ["info", "error"] }],
+		"no-unexpected-multiline": "error",
+		"no-unreachable": "warn",
+		"no-irregular-whitespace": "error",
+		"no-fallthrough": "error",
+		"no-duplicate-case": "error",
+		"no-duplicate-imports": "error",
+		"no-await-in-loop": "error",
+		"camelcase": "error",
+		"no-else-return": "error",
+		"no-var": "error",
+		"no-inline-comments": "error",
+		"no-constant-condition": "warn",
+		"no-undef": "warn",
+		"no-nested-ternary": "error",
+		"no-useless-catch": "error",
+		"no-useless-return": "error",
+		"comma-spacing": ["error", { "before": false, "after": true }],
+		"comma-style": ["error", "last"],
+		"dot-location": ["error", "property"],
+		"eol-last": ["error", "always"],
+		"func-call-spacing": ["error", "never"],
+		"key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
+		"keyword-spacing": ["error", { "before": true, "after": true }],
+		"function-call-argument-newline": ["error", "consistent"],
+		"max-statements-per-line": ["error", { "max": 1 }],
+		"no-multi-spaces": "error",
+		"semi-style": ["error", "last"],
+		"no-warning-comments": ["warn", { "terms": ["todo", "fixme"], "location": "start" }],
+		"import-newlines/enforce": ["error", {
+			"items": 1,
+			"max-len": 120,
+			"semi": true,
+			"forceSingleLine": true
+		}],
+		"space-infix-ops": ["error", { "int32Hint": false }],
+		"no-restricted-imports": [
+            "error", {
+			"patterns": [
+                "src/**/*"
+            ]
+		}],
+		"@typescript-eslint/no-restricted-imports": [
+			"error",
+			{
+				"patterns": [
+					"src/**/*"
+				]
+			}
+		]
+	},
+	"overrides": [
+		{
+			"files": ["*.js"],
+			"rules": {
+				"@typescript-eslint/explicit-function-return-type": "off"
+			}
+		}
+	],
+	"globals": {
+		"GPUCommandEncoder": true,
+		"GPUTextureView": true,
+		"GPUShaderModule": true,
+		"GPU": true,
+		"GPUDevice": true,
+		"GPUTexture": true,
+		"GPUShaderModuleDescriptor": true,
+		"GPUVertexBufferLayout": true,
+		"GPURenderPipeline": true,
+		"GPUBuffer": true,
+		"GPURequestAdapterOptions": true,
+		"GPUAdapter": true,
+		"GPUCanvasConfiguration": true,
+		"GPUTextureViewDescriptor": true,
+		"GPUCommandEncoderDescriptor": true,
+		"GPUCanvasContext": true,
+		"GPUDeviceDescriptor": true,
+		"GPUTextureFormat": true,
+		"GPUBindGroup": true,
+		"GPUVertexState": true,
+		"GPUFragmentState": true,
+		"GPUPrimitiveState": true,
+		"GPURenderPipelineDescriptor": true,
+		"GPUBufferUsage": true,
+		"GPURenderPassDescriptor": true,
+		"GPURenderPassColorAttachment": true,
+		"GPUExtent3DStrict": true,
+		"GPUTextureDescriptor": true,
+		"GPUTextureUsage": true,
+		"GPUImageCopyExternalImage": true,
+		"GPUImageCopyTextureTagged": true,
+		"GPUTextureUsageFlags": true,
+		"GPUFilterMode": true,
+		"GPUSampler": true,
+		"GPUBindGroupEntry": true,
+		"GPUBindGroupLayoutEntry": true,
+		"GPUShaderStage": true,
+		"GPUBindGroupLayout": true,
+		"GPUPipelineLayout": true,
+		"GPUSamplerBindingType": true,
+		"GPUTextureSampleType": true,
+		"GPUTextureViewDimension": true,
+		"GPUBindGroupLayoutDescriptor": true,
+		"GPUBindGroupDescriptor": true,
+		"GPUCompareFunction": true,
+		"GPUDepthStencilState": true,
+		"GPURenderPassDepthStencilAttachment": true,
+		"GPULoadOp": true
+	}
+}

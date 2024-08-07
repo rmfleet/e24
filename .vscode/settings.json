@@ -1,0 +1,12 @@
+{
+	"eslint.validate": [
+		"typescript"
+	],
+	"eslint.workingDirectories": [
+		"."
+	],
+	"[github-actions-workflow]": {
+		"editor.tabSize": 2,
+		"editor.insertSpaces": true
+	}
+}
