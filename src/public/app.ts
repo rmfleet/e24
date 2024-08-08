@@ -12,6 +12,7 @@ import { Vector } from "../modules/vector/vector.js";
 import { Camera } from "../modules/camera/camera.js";
 import { Mesh } from "../modules/mesh/mesh.js";
 import { Input } from "../modules/input/input.js";
+import { InstanceManager } from "../modules/instance/instanceManager.js";
 
 (async (): Promise<void> => {
 	try {
@@ -33,7 +34,15 @@ import { Input } from "../modules/input/input.js";
 		const mesh = new Mesh();
 		await mesh.loadFromUrl("/meshes/cube.json");
 
-		const render = new Render(display, "clear");
+		const instanceManager1 = new InstanceManager(display, 5);
+
+		instanceManager1.addInstance(new Vector(-1, 0, -5));
+		instanceManager1.addInstance(new Vector(1, 0, -5));
+		instanceManager1.addInstance(new Vector(0, 1, -5));
+		instanceManager1.addInstance(new Vector(0, -1, -5));
+		await instanceManager1.commitUpdates();
+
+		const render = new Render(display, "clear", instanceManager1);
 		await render.initialize([
 			matrixBindModel1.getBindGroupLayout(),
 			texture.getBindGroupLayout()
@@ -42,7 +51,14 @@ import { Input } from "../modules/input/input.js";
 
 		await mesh.loadFromUrl("/meshes/cube.json");
 
-		const renderModel2 = new Render(display, "load");
+		const instanceManager2 = new InstanceManager(display, 5);
+		instanceManager2.addInstance(new Vector(-1, 0, -5));
+		instanceManager2.addInstance(new Vector(1, 0, -5));
+		instanceManager2.addInstance(new Vector(0, 1, -5));
+		instanceManager2.addInstance(new Vector(0, -1, -5));
+		await instanceManager2.commitUpdates();
+
+		const renderModel2 = new Render(display, "load", instanceManager2);
 		await renderModel2.initialize([
 			matrixBindModel2.getBindGroupLayout(),
 			texture2.getBindGroupLayout()
@@ -62,15 +78,37 @@ import { Input } from "../modules/input/input.js";
 
 		const input = new Input((x: number, y: number): void => {
 			camera.yaw(-x / 100);
-			camera.pitch(-y / 100);
+			if (!camera.pitchLimit(-y / 100)) {
+				camera.pitch(-y / 100);
+			}
 		});
 
 		let rotationX: number = 0;
 		let rotationY: number = 0;
+		let counter = 0;
 
 		const appLoop = async (): Promise<void> => {
+			counter += 1;
+			if (counter === 100) {
+				counter = 0;
+			}
+
 			rotationX += 0.005;
 			rotationY += 0.01;
+
+			if (counter === 25) {
+				instanceManager1.addInstance(new Vector(0, 0, -5));
+				instanceManager2.removeInstance(new Vector(0, 0, -5));
+				await instanceManager1.commitUpdates();
+				await instanceManager2.commitUpdates();
+			}
+
+			if (counter === 75) {
+				instanceManager2.addInstance(new Vector(0, 0, -5));
+				instanceManager1.removeInstance(new Vector(0, 0, -5));
+				await instanceManager1.commitUpdates();
+				await instanceManager2.commitUpdates();
+			}
 		};
 
 		const renderLoop = async (): Promise<void> => {

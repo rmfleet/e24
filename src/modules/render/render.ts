@@ -1,5 +1,6 @@
 import type { DepthStencil } from "../depthstencil/depthstencil.js";
 import type { Display } from "../display/display.js";
+import type { InstanceManager } from "../instance/instanceManager.js";
 import type { Mesh } from "../mesh/mesh.js";
 import { Shader } from "../shader/shader.js";
 
@@ -10,16 +11,18 @@ export class Render {
 	private vertexColorBuffer: GPUBuffer;
 	private vertexTexCoordBuffer: GPUBuffer;
 	private indexBuffer: GPUBuffer;
+	private instanceManager: InstanceManager;
 	private numIndices: number;
 	private colorLoadOp: GPULoadOp;
 
-	constructor(display: Display, colorLoadOp: GPULoadOp) {
+	constructor(display: Display, colorLoadOp: GPULoadOp, instanceManager: InstanceManager) {
 		this.display = display;
 		this.renderPipeline = {} as GPURenderPipeline;
 		this.vertexBuffer = {} as GPUBuffer;
 		this.vertexColorBuffer = {} as GPUBuffer;
 		this.vertexTexCoordBuffer = {} as GPUBuffer;
 		this.indexBuffer = {} as GPUBuffer;
+		this.instanceManager = instanceManager;
 		this.numIndices = 0;
 		this.colorLoadOp = colorLoadOp;
 	}
@@ -27,11 +30,7 @@ export class Render {
 	private getVertexBufferLayouts(): GPUVertexBufferLayout[] {
 		const vertexCoordBufferLayout: GPUVertexBufferLayout = {
 			attributes: [
-				{
-					shaderLocation: 0,
-					offset: 0,
-					format: "float32x3"
-				}
+				{ shaderLocation: 0, offset: 0, format: "float32x3" }
 			],
 			arrayStride: 12,
 			stepMode: "vertex"
@@ -39,11 +38,7 @@ export class Render {
 
 		const vertexColorBufferLayout: GPUVertexBufferLayout = {
 			attributes: [
-				{
-					shaderLocation: 1,
-					offset: 0,
-					format: "float32x3"
-				}
+				{ shaderLocation: 1, offset: 0, format: "float32x3" }
 			],
 			arrayStride: 12,
 			stepMode: "vertex"
@@ -51,20 +46,25 @@ export class Render {
 
 		const vertexTexCoordBufferLayout: GPUVertexBufferLayout = {
 			attributes: [
-				{
-					shaderLocation: 2,
-					offset: 0,
-					format: "float32x2"
-				}
+				{ shaderLocation: 2, offset: 0, format: "float32x2" }
 			],
 			arrayStride: 8,
 			stepMode: "vertex"
 		};
 
+		const instancePositionBufferLayout: GPUVertexBufferLayout = {
+			attributes: [
+				{ shaderLocation: 3, offset: 0, format: "float32x3" }
+			],
+			arrayStride: 12,
+			stepMode: "instance"
+		};
+
 		const vertexBufferLayouts: GPUVertexBufferLayout[] = [
 			vertexCoordBufferLayout,
 			vertexColorBufferLayout,
-			vertexTexCoordBufferLayout
+			vertexTexCoordBufferLayout,
+			instancePositionBufferLayout
 		];
 
 		return vertexBufferLayouts;
@@ -160,14 +160,18 @@ export class Render {
 	}
 
 	async initialize(bindGroupLayouts: GPUBindGroupLayout[], mesh: Mesh): Promise<void> {
-		const shader: Shader = new Shader();
-		await shader.loadShader("/shaders/shader1.wgsl", this.display);
+		try {
+			const shader: Shader = new Shader();
+			await shader.loadShader("/shaders/shader1.wgsl", this.display);
 
-		this.initializeRenderPipeline(shader.getModule(), bindGroupLayouts);
-		this.initializeVertexCoordsBuffer(mesh.vertices);
-		this.initialiizeVertexColorsBuffer(mesh.colors);
-		this.initializeVertexTexCoordsBuffer(mesh.texcoords);
-		this.initializeIndexBuffer(mesh.indices);
+			this.initializeRenderPipeline(shader.getModule(), bindGroupLayouts);
+			this.initializeVertexCoordsBuffer(mesh.vertices);
+			this.initialiizeVertexColorsBuffer(mesh.colors);
+			this.initializeVertexTexCoordsBuffer(mesh.texcoords);
+			this.initializeIndexBuffer(mesh.indices);
+		} catch (error) {
+			console.error("Initialization failed: ", error);
+		}
 	}
 
 	render(
@@ -178,16 +182,19 @@ export class Render {
 	): void {
 		const pass = encoder.beginRenderPass(this.getRenderPassDescriptor(view, depthStencil));
 
+		pass.setPipeline(this.renderPipeline);
+
 		for (let i = 0; i < bindGroups.length; i++) {
 			pass.setBindGroup(i, bindGroups[i]);
 		}
 
-		pass.setPipeline(this.renderPipeline);
 		pass.setVertexBuffer(0, this.vertexBuffer);
 		pass.setVertexBuffer(1, this.vertexColorBuffer);
 		pass.setVertexBuffer(2, this.vertexTexCoordBuffer);
+		pass.setVertexBuffer(3, this.instanceManager.getInstanceBuffer());
 		pass.setIndexBuffer(this.indexBuffer, "uint16");
-		pass.drawIndexed(this.numIndices);
+
+		pass.drawIndexed(this.numIndices, this.instanceManager.getInstanceCount(), 0, 0, 0);
 		pass.end();
 	}
 

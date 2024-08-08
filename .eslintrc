@@ -146,6 +146,7 @@
 		"GPUCompareFunction": true,
 		"GPUDepthStencilState": true,
 		"GPURenderPassDepthStencilAttachment": true,
-		"GPULoadOp": true
+		"GPULoadOp": true,
+		"GPUMapMode": true
 	}
 }
