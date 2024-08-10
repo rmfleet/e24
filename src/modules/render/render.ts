@@ -1,7 +1,8 @@
-import type { DepthStencil } from "../depthstencil/depthstencil.js";
-import type { Display } from "../display/display.js";
-import type { InstanceManager } from "../instance/instanceManager.js";
-import type { Mesh } from "../mesh/mesh.js";
+import { DepthStencil } from "../depthstencil/depthstencil.js";
+import { Display } from "../display/display.js";
+import { IndirectBufferManager } from "../indirect/indirectBufferManager.js";
+import { InstanceManager } from "../instance/instanceManager.js";
+import { Mesh } from "../mesh/mesh.js";
 import { Shader } from "../shader/shader.js";
 
 export class Render {
@@ -14,17 +15,32 @@ export class Render {
 	private instanceManager: InstanceManager;
 	private numIndices: number;
 	private colorLoadOp: GPULoadOp;
+	private indirectBufferManager: IndirectBufferManager;
 
-	constructor(display: Display, colorLoadOp: GPULoadOp, instanceManager: InstanceManager) {
+	constructor(display: Display, colorLoadOp: GPULoadOp) {
 		this.display = display;
 		this.renderPipeline = {} as GPURenderPipeline;
 		this.vertexBuffer = {} as GPUBuffer;
 		this.vertexColorBuffer = {} as GPUBuffer;
 		this.vertexTexCoordBuffer = {} as GPUBuffer;
 		this.indexBuffer = {} as GPUBuffer;
-		this.instanceManager = instanceManager;
 		this.numIndices = 0;
 		this.colorLoadOp = colorLoadOp;
+		this.indirectBufferManager = new IndirectBufferManager(display, this.numIndices);
+
+		this.instanceManager = new InstanceManager(
+			display,
+			500,
+			this.updateIndirectBuffer.bind(this)
+		);
+	}
+
+	public getInstanceManager(): InstanceManager {
+		return this.instanceManager;
+	}
+
+	private updateIndirectBuffer(instanceCount: number): void {
+		this.indirectBufferManager.updateIndirectBuffer(instanceCount);
 	}
 
 	private getVertexBufferLayouts(): GPUVertexBufferLayout[] {
@@ -110,6 +126,7 @@ export class Render {
 		this.display.getDevice().queue.writeBuffer(this.indexBuffer, 0, paddedIndices);
 
 		this.numIndices = indices.length;
+		this.indirectBufferManager = new IndirectBufferManager(this.display, this.numIndices);
 	}
 
 	private initializeRenderPipeline(shaderModule: GPUShaderModule, bindGroupLayouts: GPUBindGroupLayout[]): void {
@@ -159,19 +176,12 @@ export class Render {
 		this.renderPipeline = this.display.getDevice().createRenderPipeline(renderPipelineDescriptor);
 	}
 
-	async initialize(bindGroupLayouts: GPUBindGroupLayout[], mesh: Mesh): Promise<void> {
-		try {
-			const shader: Shader = new Shader();
-			await shader.loadShader("/shaders/shader1.wgsl", this.display);
-
-			this.initializeRenderPipeline(shader.getModule(), bindGroupLayouts);
-			this.initializeVertexCoordsBuffer(mesh.vertices);
-			this.initialiizeVertexColorsBuffer(mesh.colors);
-			this.initializeVertexTexCoordsBuffer(mesh.texcoords);
-			this.initializeIndexBuffer(mesh.indices);
-		} catch (error) {
-			console.error("Initialization failed: ", error);
-		}
+	public initialize(bindGroupLayouts: GPUBindGroupLayout[], mesh: Mesh, shader: Shader): void {
+		this.initializeRenderPipeline(shader.getModule(), bindGroupLayouts);
+		this.initializeVertexCoordsBuffer(mesh.vertices);
+		this.initialiizeVertexColorsBuffer(mesh.colors);
+		this.initializeVertexTexCoordsBuffer(mesh.texcoords);
+		this.initializeIndexBuffer(mesh.indices);
 	}
 
 	render(
@@ -194,7 +204,7 @@ export class Render {
 		pass.setVertexBuffer(3, this.instanceManager.getInstanceBuffer());
 		pass.setIndexBuffer(this.indexBuffer, "uint16");
 
-		pass.drawIndexed(this.numIndices, this.instanceManager.getInstanceCount(), 0, 0, 0);
+		pass.drawIndexedIndirect(this.indirectBufferManager.getIndirectBuffer(), 0);
 		pass.end();
 	}
 
