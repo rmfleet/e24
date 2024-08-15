@@ -15,6 +15,31 @@ The server will start by default on port `6502`. To configure the application to
 
 For automatic reload when modifying source files, run `npm run watch` instead of `npm start` which will rebuild the distributable on each file save and start the server.
 
+## Running Tests
+This project uses Vitest for testing. The testing configuration is defined in <b>vitest.config.js</b>.
+
+The following npm scripts are available:
+
+### Run all tests:
+
+`npm run test`
+
+Runs all test files in the project using the configuration specified in vitest.config.js.
+
+### Run tests with UI and coverage:
+
+`npm run test:ui`
+
+Opens the Vitest UI for an interactive testing experience, while also generating a coverage report in HTML format.
+
+### Generate coverage report:
+
+`npm run test:coverage`
+
+Runs all tests and generates a detailed code coverage report.
+
+
+
 ## Controls
 
 Use `w a s d` to move forward/back and strafe left/right
