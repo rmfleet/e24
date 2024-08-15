@@ -1,4 +1,4 @@
-import type { Matrix } from "../matrix/matrix";
+import type { Matrix } from "../matrix/Matrix";
 
 export class Vector {
 	x: number;
@@ -11,10 +11,15 @@ export class Vector {
 		this.z = z;
 	}
 
-	public cross (v: Vector, w: Vector): Vector {
-		this.x = v.y * w.z - v.z * w.y;
-		this.y = v.z * w.x - v.x * w.z;
-		this.z = v.x * w.y - v.y * w.x;
+	public cross(v: Vector, w: Vector): Vector {
+		const x = v.y * w.z - v.z * w.y;
+		const y = v.z * w.x - v.x * w.z;
+		const z = v.x * w.y - v.y * w.x;
+
+		this.x = x;
+		this.y = y;
+		this.z = z;
+
 		return this;
 	}
 
@@ -50,6 +55,10 @@ export class Vector {
 		this.y = v.y;
 		this.z = v.z;
 		return this;
+	}
+
+	public toString(): string {
+		return `${this.x},${this.y},${this.z}`;
 	}
 
 	public transformCoord (matrix: Matrix): Vector {

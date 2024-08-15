@@ -1,4 +1,4 @@
-import { Server } from "./modules/server/server.js";
+import { Server } from "./modules/server/Server.js";
 import dotenv from "dotenv";
 
 const getPort = (): number => {

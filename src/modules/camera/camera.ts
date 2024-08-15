@@ -1,5 +1,5 @@
-import { Matrix } from "../matrix/matrix.js";
-import { Vector } from "../vector/vector.js";
+import { Matrix } from "../matrix/Matrix.js";
+import { Vector } from "../vector/Vector.js";
 
 export class Camera {
 	public position: Vector;

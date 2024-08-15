@@ -1,18 +1,19 @@
 import "./app.scss";
-import { Canvas } from "../modules/canvas/canvas.js";
-import { Display } from "../modules/display/display.js";
-import { LoopModel } from "../modules/loop/loop.js";
-import { degreeToRadian } from "../modules/maths/index.js";
-import { Matrix } from "../modules/matrix/matrix.js";
-import { Render } from "../modules/render/render.js";
-import { Texture } from "../modules/texture/texture.js";
-import { DepthStencil } from "../modules/depthstencil/depthstencil.js";
-import { MatrixBindModel } from "../modules/matrix/matrixBind.js";
-import { Vector } from "../modules/vector/vector.js";
-import { Camera } from "../modules/camera/camera.js";
-import { Mesh } from "../modules/mesh/mesh.js";
-import { Input } from "../modules/input/input.js";
-import { Shader } from "../modules/shader/shader.js";
+import { Canvas } from "../modules/canvas/Canvas.js";
+import { Display } from "../modules/display/Display.js";
+import { LoopModel } from "../modules/loop/Loop.js";
+import { degreeToRadian } from "../modules/maths/Trigonometry.js";
+import { Matrix } from "../modules/matrix/Matrix.js";
+import { InstanceRenderer } from "../modules/render/InstanceRenderer.js";
+import { Texture } from "../modules/texture/Texture.js";
+import { DepthStencil } from "../modules/depthstencil/DepthStencil.js";
+import { MatrixBindModel } from "../modules/matrix/MatrixBind.js";
+import { Vector } from "../modules/vector/Vector.js";
+import { Camera } from "../modules/camera/Camera.js";
+import { Mesh } from "../modules/mesh/Mesh.js";
+import { Input } from "../modules/input/Input.js";
+import { Shader } from "../modules/shader/Shader.js";
+import { VoxelManager } from "../modules/voxel/VoxelManager.js";
 
 (async (): Promise<void> => {
 	try {
@@ -28,6 +29,9 @@ import { Shader } from "../modules/shader/shader.js";
 		const texture2: Texture = new Texture();
 		await texture2.loadTexture("/textures/tiles.jpg", display.getDevice());
 
+		const texture3: Texture = new Texture();
+		await texture3.loadTexture("/textures/rattan.jpeg", display.getDevice());
+
 		const shader: Shader = new Shader();
 		await shader.loadShader("/shaders/shader1.wgsl", display);
 
@@ -35,55 +39,24 @@ import { Shader } from "../modules/shader/shader.js";
 		await mesh.loadFromUrl("/meshes/cube.json");
 
 		const matrixBindModel1: MatrixBindModel = new MatrixBindModel(display.getDevice());
-		const render = new Render(display, "clear");
+		const render = new InstanceRenderer(display, "clear");
 		render.initialize([
 			matrixBindModel1.getBindGroupLayout(),
 			texture.getBindGroupLayout()
 		], mesh, shader);
 
+		const positions1: Vector[] = [
+			new Vector(-1, 0, -5),
+			new Vector(1, 0, -5),
+			new Vector(0, 1, -5),
+			new Vector(0, -1, -5)
+		];
+
 		const instanceManager1 = render.getInstanceManager();
+		await instanceManager1.setInstances(positions1);
 
-		instanceManager1.addInstance(new Vector(-1, 0, -5));
-		instanceManager1.addInstance(new Vector(1, 0, -5));
-		instanceManager1.addInstance(new Vector(0, 1, -5));
-		instanceManager1.addInstance(new Vector(0, -1, -5));
-		await instanceManager1.commitUpdates();
-
-
-		await mesh.loadFromUrl("/meshes/cube.json");
-
-		const matrixBindModel2: MatrixBindModel = new MatrixBindModel(display.getDevice());
-		const renderModel2 = new Render(display, "load");
-		renderModel2.initialize([
-			matrixBindModel2.getBindGroupLayout(),
-			texture2.getBindGroupLayout()
-		], mesh, shader);
-
-		const instanceManager2 = renderModel2.getInstanceManager();
-		instanceManager2.addInstance(new Vector(-1, 0, -5));
-		instanceManager2.addInstance(new Vector(1, 0, -5));
-		instanceManager2.addInstance(new Vector(0, 1, -5));
-		instanceManager2.addInstance(new Vector(0, -1, -5));
-		await instanceManager2.commitUpdates();
-
-
-		const matrixBindModel3: MatrixBindModel = new MatrixBindModel(display.getDevice());
-		const renderModel3 = new Render(display, "load");
-		renderModel3.initialize([
-			matrixBindModel3.getBindGroupLayout(),
-			texture2.getBindGroupLayout()
-		], mesh, shader);
-
-		const instanceManager3 = renderModel3.getInstanceManager();
-		for (let x = 0; x < 200; x++) {
-			for (let z = 0; z < 200; z++) {
-				instanceManager3.addInstance(new Vector(x, 0, z));
-			}
-		}
-
-		await instanceManager3.commitUpdates();
-
-
+		const voxelManager = new VoxelManager(display, mesh, shader, [texture, texture2, texture3]);
+		await voxelManager.initialize();
 
 
 		const modelMatrix: Matrix = new Matrix();
@@ -109,7 +82,28 @@ import { Shader } from "../modules/shader/shader.js";
 		let rotationY: number = 0;
 		let counter = 0;
 
+		const renderFpsElement = document.getElementById("renderfps") as HTMLElement;
+		const updateFpsElement = document.getElementById("updatefps") as HTMLElement;
+		const positionElement = document.getElementById("position") as HTMLElement;
+
+		let renderFrameCount = 0;
+		let updateFrameCount = 0;
+		let lastRenderTime = performance.now();
+		let lastUpdateTime = performance.now();
+
 		const appLoop = async (): Promise<void> => {
+			updateFrameCount++;
+			const now = performance.now();
+			const deltaTime = now - lastUpdateTime;
+
+			if (deltaTime >= 1000) {
+				const updateFps = (updateFrameCount / deltaTime) * 1000;
+				updateFpsElement.textContent = `Update FPS: ${Math.round(updateFps)}`;
+				updateFrameCount = 0;
+				lastUpdateTime = now;
+			}
+
+
 			counter += 1;
 			if (counter === 100) {
 				counter = 0;
@@ -119,21 +113,35 @@ import { Shader } from "../modules/shader/shader.js";
 			rotationY += 0.01;
 
 			if (counter === 25) {
-				instanceManager1.addInstance(new Vector(0, 0, -5));
-				instanceManager2.removeInstance(new Vector(0, 0, -5));
-				await instanceManager1.commitUpdates();
-				await instanceManager2.commitUpdates();
+			//	positions1.push(new Vector(0, 0, -5));
+			//	instanceManager1.addInstance(new Vector(0, 0, -5));
+			//	instanceManager2.removeInstance(new Vector(0, 0, -5));
+			//	await render.setInstancePositions(positions1);
+			//	await instanceManager2.commitUpdates();
 			}
 
 			if (counter === 75) {
-				instanceManager2.addInstance(new Vector(0, 0, -5));
-				instanceManager1.removeInstance(new Vector(0, 0, -5));
-				await instanceManager1.commitUpdates();
-				await instanceManager2.commitUpdates();
+			//	instanceManager2.addInstance(new Vector(0, 0, -5));
+			//	instanceManager1.removeInstance(new Vector(0, 0, -5));
+			//	await instanceManager1.commitUpdates();
+			//	await instanceManager2.commitUpdates();
 			}
 		};
 
 		const renderLoop = async (): Promise<void> => {
+			renderFrameCount++;
+			const now = performance.now();
+			const deltaTime = now - lastRenderTime;
+
+			if (deltaTime >= 1000) {
+				const renderFps = (renderFrameCount / deltaTime) * 1000;
+				renderFpsElement.textContent = `Render FPS: ${Math.round(renderFps)}`;
+				renderFrameCount = 0;
+				lastRenderTime = now;
+			}
+
+			positionElement.textContent = `Position: ${camera.position.toString()}`;
+
 			if (input.isMouseDown("left")) {
 				input.requestPointerLock();
 			}
@@ -181,6 +189,7 @@ import { Shader } from "../modules/shader/shader.js";
 			camera.setUpright();
 			const cameraMatrix = camera.getViewMatrix();
 
+			// Render the rotating cubes
 			modelMatrix.setRotation(new Vector(0, 1, 0), rotationY);
 			modelMatrix.concatenate(new Matrix().setRotation(new Vector(1, 0, 0), rotationX));
 			modelMatrix.translate(new Vector(0, 0, 0));
@@ -202,37 +211,18 @@ import { Shader } from "../modules/shader/shader.js";
 				texture.getBindGroup()
 			], depthStencil);
 
-			modelMatrix.setRotation(new Vector(0, 0, 0), 0);
-			modelMatrix.translate(new Vector(1, 0, -5));
-
-			viewMatrix.set(cameraMatrix);
-			viewMatrix.concatenate(modelMatrix);
-
-			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.1, 1000);
-			projectionMatrix.concatenate(viewMatrix);
-
-			matrixBindModel2.bind(display.getDevice(), projectionMatrix);
-			depthStencil.setDepthLoadOp("load");
-			renderModel2.render(encoder, view, [
-				matrixBindModel2.getBindGroup(),
-				texture2.getBindGroup()
-			], depthStencil);
-
+			// Render the voxel manager
 			modelMatrix.setRotation(new Vector(0, 0, 0), 0);
 			modelMatrix.translate(new Vector(0, 0, 0));
 
 			viewMatrix.set(cameraMatrix);
-			viewMatrix.concatenate(modelMatrix);
+			//viewMatrix.concatenate(modelMatrix);
 
 			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.1, 1000);
 			projectionMatrix.concatenate(viewMatrix);
 
-			matrixBindModel3.bind(display.getDevice(), projectionMatrix);
 			depthStencil.setDepthLoadOp("load");
-			renderModel3.render(encoder, view, [
-				matrixBindModel3.getBindGroup(),
-				texture2.getBindGroup()
-			], depthStencil);
+			voxelManager.render(projectionMatrix, encoder, view, depthStencil);
 
 			display.submitCommandEncoder(encoder);
 		};

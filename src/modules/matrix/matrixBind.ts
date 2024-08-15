@@ -1,4 +1,4 @@
-import type { Matrix } from "./matrix.js";
+import type { Matrix } from "./Matrix.js";
 
 export class MatrixBindModel {
 	private bindBuffer: GPUBuffer;

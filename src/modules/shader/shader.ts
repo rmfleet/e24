@@ -1,4 +1,4 @@
-import type { Display } from "../display/display.js";
+import type { Display } from "../display/Display.js";
 
 export class Shader {
 	private module: GPUShaderModule | null;

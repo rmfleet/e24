@@ -1,4 +1,4 @@
-import type { Canvas } from "../canvas/canvas.js";
+import type { Canvas } from "../canvas/Canvas.js";
 
 export class DepthStencil {
 	private depthTexture: GPUTexture;

@@ -1,4 +1,4 @@
-import type { Canvas } from "../canvas/canvas";
+import type { Canvas } from "../canvas/Canvas";
 
 export class Display {
 	private canvas: Canvas;

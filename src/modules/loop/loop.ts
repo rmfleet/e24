@@ -1,4 +1,4 @@
-import type { Display } from "../display/display.js";
+import type { Display } from "../display/Display.js";
 
 export class LoopModel {
 	private appCallback: () => Promise<void>;
@@ -27,7 +27,7 @@ export class LoopModel {
 		const startTime: number = performance.now();
 
 		this.appCallback().then(() => {
-			const interval: number = 1000 / 60;
+			const interval: number = 1000 / 30;
 			const endTime: number = performance.now();
 			const elapsedTime: number = endTime - startTime;
 			const sleepTime: number = Math.max(0, interval - elapsedTime);

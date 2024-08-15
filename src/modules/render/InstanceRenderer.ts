@@ -1,11 +1,11 @@
-import { DepthStencil } from "../depthstencil/depthstencil.js";
-import { Display } from "../display/display.js";
-import { IndirectBufferManager } from "../indirect/indirectBufferManager.js";
-import { InstanceManager } from "../instance/instanceManager.js";
-import { Mesh } from "../mesh/mesh.js";
-import { Shader } from "../shader/shader.js";
+import { DepthStencil } from "../depthstencil/DepthStencil.js";
+import { Display } from "../display/Display.js";
+import { IndirectBufferManager } from "../indirect/IndirectBufferManager.js";
+import { InstanceManager } from "../instance/InstanceManager.js";
+import { Mesh } from "../mesh/Mesh.js";
+import { Shader } from "../shader/Shader.js";
 
-export class Render {
+export class InstanceRenderer {
 	private display: Display;
 	private renderPipeline: GPURenderPipeline;
 	private vertexBuffer: GPUBuffer;

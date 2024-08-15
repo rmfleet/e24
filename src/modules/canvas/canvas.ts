@@ -9,7 +9,7 @@ export class Canvas {
 			this.setDimensions(window.innerWidth, window.innerHeight);
 		});
 
-		document.body.appendChild(this.htmlCanvasElement);
+		document.body.insertBefore(this.htmlCanvasElement, document.body.firstChild);
 	}
 
 	getAspectRatio (): number {

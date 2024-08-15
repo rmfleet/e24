@@ -1,4 +1,4 @@
-import { Vector } from "../vector/vector";
+import { Vector } from "../vector/Vector";
 
 const AA = 0;
 const AB = 1;
@@ -125,11 +125,11 @@ export class Matrix {
 		this.elements[DD] = 1;
 	}
 
-	setPerspective (fov: number, aspect: number, near: number, far: number): void {
+	setPerspective (fov: number, aspectRadians: number, near: number, far: number): void {
 		const f = 1.0 / Math.tan(fov / 2);
 		const nf = 1 / (near - far);
 
-		this.elements[AA] = f / aspect;
+		this.elements[AA] = f / aspectRadians;
 		this.elements[AB] = 0;
 		this.elements[AC] = 0;
 		this.elements[AD] = 0;
