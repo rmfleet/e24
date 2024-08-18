@@ -82,8 +82,9 @@ export class Matrix {
 		return this;
 	}
 
-	public set (matrix: Matrix): void {
+	public set (matrix: Matrix): Matrix {
 		this.elements.set(matrix.elements);
+		return this;
 	}
 
 	public setView (position: Vector, right: Vector, up: Vector, view: Vector): Matrix {
@@ -99,9 +100,9 @@ export class Matrix {
 		this.elements[CB] = up.z;
 		this.elements[CC] = view.z;
 		this.elements[CD] = 0.0;
-		this.elements[DA] = position.dot(right);
-		this.elements[DB] = position.dot(up);
-		this.elements[DC] = position.dot(view);
+		this.elements[DA] = -position.dot(right);
+		this.elements[DB] = -position.dot(up);
+		this.elements[DC] = -position.dot(view);
 		this.elements[DD] = 1.0;
 		return this;
 	}
@@ -147,14 +148,14 @@ export class Matrix {
 		this.elements[DD] = 0;
 	}
 
-	public setRotation (v: Vector, angle: number): Matrix {
+	public setRotation (v: Vector, radianAngle: number): Matrix {
 		if (v.isZero()) {
 			this.setIdentity();
 			return this;
 		}
 
-		const c = Math.cos(angle);
-		const s = Math.sin(angle);
+		const c = Math.cos(radianAngle);
+		const s = Math.sin(radianAngle);
 		const nv: Vector = new Vector().set(v).normalize();
 
 		this.elements[AA] = (nv.x * nv.x) * (1.0 - c) + c;

@@ -128,4 +128,113 @@ describe("Matrix", () => {
 		expect(matrix.elements[14]).toEqual(3);
 		expect(matrix.elements[15]).toEqual(1);
 	});
+
+	it("should get the byte length of a Matrix", () => {
+		const matrix = new Matrix();
+		expect(matrix.getByteLength()).toEqual(64);
+	});
+
+	it("should be able to setView on a Matrix", () => {
+		const matrix = new Matrix();
+		const position = new Vector(1, 2, 3);
+		const right = new Vector(4, 5, 6);
+		const up = new Vector(7, 8, 9);
+		const view = new Vector(10, 11, 12);
+
+		matrix.setView(position, right, up, view);
+
+		expect(matrix.elements[0]).toEqual(4);
+		expect(matrix.elements[1]).toEqual(7);
+		expect(matrix.elements[2]).toEqual(10);
+		expect(matrix.elements[3]).toEqual(0.0);
+
+		expect(matrix.elements[4]).toEqual(5);
+		expect(matrix.elements[5]).toEqual(8);
+		expect(matrix.elements[6]).toEqual(11);
+		expect(matrix.elements[7]).toEqual(0.0);
+
+		expect(matrix.elements[8]).toEqual(6);
+		expect(matrix.elements[9]).toEqual(9);
+		expect(matrix.elements[10]).toEqual(12);
+		expect(matrix.elements[11]).toEqual(0.0);
+
+		expect(matrix.elements[12]).toEqual(-position.dot(right));
+		expect(matrix.elements[13]).toEqual(-position.dot(up));
+		expect(matrix.elements[14]).toEqual(-position.dot(view));
+		expect(matrix.elements[15]).toEqual(1.0);
+	});
+
+	it("should be able to set a perspective Matrix", () => {
+		const expectedF = 1 / Math.tan(1 / 2);
+		const aspectRatio = 2;
+		const near = 3;
+		const far = 4;
+
+		const matrix = new Matrix();
+		matrix.setPerspective(1, aspectRatio, near, far);
+
+		expect(matrix.elements[0]).toBeCloseTo(expectedF / aspectRatio);
+		expect(matrix.elements[5]).toBeCloseTo(expectedF);
+		expect(matrix.elements[10]).toBeCloseTo(-(far + near) / (far - near));
+		expect(matrix.elements[11]).toBe(-1);
+		expect(matrix.elements[14]).toBeCloseTo(-(2 * far * near) / (far - near));
+		expect(matrix.elements[15]).toBe(0);
+
+		expect(matrix.elements[1]).toBe(0);
+		expect(matrix.elements[2]).toBe(0);
+		expect(matrix.elements[3]).toBe(0);
+
+		expect(matrix.elements[4]).toBe(0);
+		expect(matrix.elements[6]).toBe(0);
+		expect(matrix.elements[7]).toBe(0);
+
+		expect(matrix.elements[8]).toBe(0);
+		expect(matrix.elements[9]).toBe(0);
+
+		expect(matrix.elements[12]).toBe(0);
+		expect(matrix.elements[13]).toBe(0);
+	});
+
+	it("should return an identity matrix when the rotation matrix is set to 0", () => {
+		const matrix = new Matrix();
+		matrix.setRotation(new Vector(0, 0, 0), 0);
+		expect(matrix.elements[0]).toBe(1);
+		expect(matrix.elements[1]).toBe(0);
+		expect(matrix.elements[2]).toBe(0);
+		expect(matrix.elements[3]).toBe(0);
+		expect(matrix.elements[4]).toBe(0);
+		expect(matrix.elements[5]).toBe(1);
+		expect(matrix.elements[6]).toBe(0);
+		expect(matrix.elements[7]).toBe(0);
+		expect(matrix.elements[8]).toBe(0);
+		expect(matrix.elements[9]).toBe(0);
+		expect(matrix.elements[10]).toBe(1);
+		expect(matrix.elements[11]).toBe(0);
+		expect(matrix.elements[12]).toBe(0);
+		expect(matrix.elements[13]).toBe(0);
+		expect(matrix.elements[14]).toBe(0);
+		expect(matrix.elements[15]).toBe(1);
+	});
+
+	it("should be able to set a rotation matrix", () => {
+		const matrix = new Matrix();
+		matrix.setRotation(new Vector(1, 0, 0), Math.PI / 2);
+
+		expect(matrix.elements[0]).toBeCloseTo(1);
+		expect(matrix.elements[1]).toBeCloseTo(0);
+		expect(matrix.elements[2]).toBeCloseTo(0);
+		expect(matrix.elements[3]).toBeCloseTo(0);
+		expect(matrix.elements[4]).toBeCloseTo(0);
+		expect(matrix.elements[5]).toBeCloseTo(6.123234262925839e-17);
+		expect(matrix.elements[6]).toBeCloseTo(1);
+		expect(matrix.elements[7]).toBeCloseTo(0);
+		expect(matrix.elements[8]).toBeCloseTo(0);
+		expect(matrix.elements[9]).toBeCloseTo(-1);
+		expect(matrix.elements[10]).toBeCloseTo(6.123234262925839e-17);
+		expect(matrix.elements[11]).toBeCloseTo(0);
+		expect(matrix.elements[12]).toBeCloseTo(0);
+		expect(matrix.elements[13]).toBeCloseTo(0);
+		expect(matrix.elements[14]).toBeCloseTo(0);
+		expect(matrix.elements[15]).toBeCloseTo(1);
+	});
 });

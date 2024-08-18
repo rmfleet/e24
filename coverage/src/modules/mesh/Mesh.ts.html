@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for Canvas.ts</title>
+    <title>Code coverage report for src/modules/mesh/Mesh.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="prettify.css" />
-    <link rel="stylesheet" href="base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(sort-arrow-sprite.png);
+            background-image: url(../../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,7 +19,7 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="index.html">All files</a> Canvas.ts</h1>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/modules/mesh</a> Mesh.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
@@ -32,14 +32,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -97,25 +97,37 @@
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
 <a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -125,46 +137,49 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export class Canvas {
-	private htmlCanvasElement: HTMLCanvasElement;
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">interface MeshData {
+	version: number;
+	vertices: Float32Array;
+	colors: Float32Array;
+	texcoords: Float32Array;
+	indices: Uint16Array;
+}
 &nbsp;
-	constructor() {
-		this.htmlCanvasElement = document.createElement("canvas");
-		this.setDimensions(window.innerWidth, window.innerHeight);
+export class Mesh implements MeshData {
+	version: number;
+	vertices: Float32Array;
+	colors: Float32Array;
+	texcoords: Float32Array;
+	indices: Uint16Array;
 &nbsp;
-		window.addEventListener("resize", () =&gt; {
-			this.setDimensions(window.innerWidth, window.innerHeight);
-		});
-&nbsp;
-		document.body.insertBefore(this.htmlCanvasElement, document.body.firstChild);
+	constructor(meshData: MeshData | undefined = undefined) {
+		this.version = meshData?.version || 0;
+		this.vertices = meshData?.vertices || new Float32Array();
+		this.colors = meshData?.colors || new Float32Array();
+		this.texcoords = meshData?.texcoords || new Float32Array();
+		this.indices = meshData?.indices || new Uint16Array();
 	}
 &nbsp;
-	getAspectRatio (): number {
-		return this.htmlCanvasElement.width / this.htmlCanvasElement.height;
+	async loadFromUrl(url: string): Promise&lt;void&gt; {
+		const response = await fetch(url);
+		const jsonString = await response.text();
+		this.parse(jsonString);
 	}
 &nbsp;
-	getHTMLCanvasElement (): HTMLCanvasElement {
-		return this.htmlCanvasElement;
-	}
-&nbsp;
-	getDimensions (): { width: number, height: number } {
-		return {
-			width: this.htmlCanvasElement.width,
-			height: this.htmlCanvasElement.height
-		};
-	}
-&nbsp;
-	setDimensions (width: number, height: number): void {
-		this.htmlCanvasElement.width = width;
-		this.htmlCanvasElement.height = height;
+	private parse(jsonString: string): void {
+		const meshData: MeshData = JSON.parse(jsonString);
+		this.version = meshData.version;
+		this.vertices = new Float32Array(meshData.vertices);
+		this.colors = new Float32Array(meshData.colors);
+		this.texcoords = new Float32Array(meshData.texcoords);
+		this.indices = new Uint16Array(meshData.indices);
 	}
 }
+&nbsp;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -172,16 +187,16 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2024-08-15T05:09:36.086Z
+                at 2024-08-18T15:03:44.851Z
             </div>
-        <script src="prettify.js"></script>
+        <script src="../../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="sorter.js"></script>
-        <script src="block-navigation.js"></script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
     </body>
 </html>
     

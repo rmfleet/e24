@@ -33,16 +33,16 @@ export class Camera {
 		return false;
 	}
 
-	public pitch(units: number): void {
+	public pitch(radianAngle: number): void {
 		const matrix = new Matrix();
-		matrix.setRotation(this.right, units);
+		matrix.setRotation(this.right, radianAngle);
 		this.view.transformCoord(matrix);
 		this.view.normalize();
 	}
 
-	public roll(units: number): void {
+	public roll(radianAngle: number): void {
 		const matrix = new Matrix();
-		matrix.setRotation(this.view, units);
+		matrix.setRotation(this.view, radianAngle);
 		this.right.transformCoord(matrix);
 		this.up.transformCoord(matrix);
 	}
@@ -70,16 +70,15 @@ export class Camera {
 		return matrix.setView(this.position, this.right, this.up, this.view);
 	}
 
-	public walk(units: number): void {
+	public move(units: number): void {
 		this.position.x += units * this.view.x;
 		this.position.y += units * this.view.y;
 		this.position.z += units * this.view.z;
 	}
 
-	public yaw(units: number): void {
+	public yaw(radianAngle: number): void {
 		const matrix = new Matrix();
-		//matrix.setRotation(this.up, units);
-		matrix.setRotation(new Vector(0, 1, 0), units);
+		matrix.setRotation(new Vector(0, 1, 0), radianAngle);
 		this.view.transformCoord(matrix);
 		this.view.normalize();
 	}

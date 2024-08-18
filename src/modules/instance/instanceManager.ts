@@ -3,7 +3,6 @@ import type { Vector } from "../vector/Vector.js";
 
 export class InstanceManager {
 	private display: Display;
-	//private instancePositions: Vector[];
 	private instancePositionBuffer: GPUBuffer;
 	private stagingBuffer: GPUBuffer;
 	private bufferCapacity: number;
@@ -15,7 +14,6 @@ export class InstanceManager {
 		onInstanceCountChange?: (instanceCount: number) => void
 	) {
 		this.display = display;
-		//this.instancePositions = [];
 		this.bufferCapacity = initialCapacity;
 		this.instancePositionBuffer = {} as GPUBuffer;
 		this.stagingBuffer = {} as GPUBuffer;
@@ -23,19 +21,6 @@ export class InstanceManager {
 
 		this.createBuffers(initialCapacity);
 	}
-
-	//public addInstance(instancePosition: Vector): void {
-	//	this.instancePositions.push(instancePosition);
-	//}
-
-	//public removeInstance(instancePosition: Vector): void {
-	//	const index = this.instancePositions.findIndex(pos =>
-	//		pos.x === instancePosition.x && pos.y === instancePosition.y && pos.z === instancePosition.z
-	//	);
-	//	if (index !== -1) {
-	//		this.instancePositions.splice(index, 1);
-	//	}
-	//}
 
 	public async setInstances(positions: Vector[]): Promise<void> {
 		const requiredCapacity = positions.length * 3 * Float32Array.BYTES_PER_ELEMENT;

@@ -11,6 +11,13 @@ export class Vector {
 		this.z = z;
 	}
 
+	public add (v: Vector): Vector {
+		this.x += v.x;
+		this.y += v.y;
+		this.z += v.z;
+		return this;
+	}
+
 	public cross(v: Vector, w: Vector): Vector {
 		const x = v.y * w.z - v.z * w.y;
 		const y = v.z * w.x - v.x * w.z;

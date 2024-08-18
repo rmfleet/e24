@@ -81,4 +81,13 @@ describe("Vector", () => {
 		expect(vector.y).toBe(2);
 		expect(vector.z).toBe(3);
 	});
+
+	it("should be able to add two Vectors", () => {
+		const vector = new Vector(1, 2, 3);
+		const other = new Vector(4, 5, 6);
+		const result = vector.add(other);
+		expect(result.x).toBe(5);
+		expect(result.y).toBe(7);
+		expect(result.z).toBe(9);
+	});
 });

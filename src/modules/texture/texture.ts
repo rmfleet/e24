@@ -10,7 +10,8 @@ export class Texture {
 	private copyTextureToDevice (device: GPUDevice, imageBitmap: ImageBitmap): GPUTexture {
 		const copySize: GPUExtent3DStrict = {
 			width: imageBitmap.width,
-			height: imageBitmap.height
+			height: imageBitmap.height,
+			depthOrArrayLayers: 1
 		};
 
 		const format: GPUTextureFormat = "rgba8unorm";

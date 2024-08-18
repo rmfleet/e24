@@ -4,7 +4,7 @@ import { Display } from "../modules/display/Display.js";
 import { LoopModel } from "../modules/loop/Loop.js";
 import { degreeToRadian } from "../modules/maths/Trigonometry.js";
 import { Matrix } from "../modules/matrix/Matrix.js";
-import { InstanceRenderer } from "../modules/render/InstanceRenderer.js";
+import { InstanceRenderer } from "../modules/instance/InstanceRenderer.js";
 import { Texture } from "../modules/texture/Texture.js";
 import { DepthStencil } from "../modules/depthstencil/DepthStencil.js";
 import { MatrixBindModel } from "../modules/matrix/MatrixBind.js";
@@ -14,6 +14,7 @@ import { Mesh } from "../modules/mesh/Mesh.js";
 import { Input } from "../modules/input/Input.js";
 import { Shader } from "../modules/shader/Shader.js";
 import { VoxelManager } from "../modules/voxel/VoxelManager.js";
+import { Frustum } from "../modules/frustum/Frustum.js";
 
 (async (): Promise<void> => {
 	try {
@@ -55,7 +56,15 @@ import { VoxelManager } from "../modules/voxel/VoxelManager.js";
 		const instanceManager1 = render.getInstanceManager();
 		await instanceManager1.setInstances(positions1);
 
-		const voxelManager = new VoxelManager(display, mesh, shader, [texture, texture2, texture3]);
+		const voxelManagerInput = {
+			display,
+			mesh,
+			shader,
+			textures: [texture, texture2, texture3],
+			position: new Vector(-5, -10, -5)
+		};
+
+		const voxelManager = new VoxelManager(voxelManagerInput);
 		await voxelManager.initialize();
 
 
@@ -171,23 +180,25 @@ import { VoxelManager } from "../modules/voxel/VoxelManager.js";
 			}
 
 			if (input.isKeyDown("w") || input.isKeyDown("W")) {
-				camera.walk(0.05);
+				camera.move(-0.05);
 			}
 
 			if (input.isKeyDown("s") || input.isKeyDown("S")) {
-				camera.walk(-0.05);
+				camera.move(0.05);
 			}
 
 			if (input.isKeyDown("a") || input.isKeyDown("A")) {
-				camera.strafe(0.05);
+				camera.strafe(-0.05);
 			}
 
 			if (input.isKeyDown("d") || input.isKeyDown("D")) {
-				camera.strafe(-0.05);
+				camera.strafe(0.05);
 			}
 
 			camera.setUpright();
 			const cameraMatrix = camera.getViewMatrix();
+
+			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.1, 1000);
 
 			// Render the rotating cubes
 			modelMatrix.setRotation(new Vector(0, 1, 0), rotationY);
@@ -197,10 +208,9 @@ import { VoxelManager } from "../modules/voxel/VoxelManager.js";
 			viewMatrix.set(cameraMatrix);
 			viewMatrix.concatenate(modelMatrix);
 
-			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.1, 1000);
-			projectionMatrix.concatenate(viewMatrix);
+			let pvMatrix = new Matrix().set(projectionMatrix).concatenate(viewMatrix);
 
-			matrixBindModel1.bind(display.getDevice(), projectionMatrix);
+			matrixBindModel1.bind(display.getDevice(), pvMatrix);
 
 			const encoder: GPUCommandEncoder = display.createCommandEncoder();
 			const view: GPUTextureView = display.createView();
@@ -216,13 +226,13 @@ import { VoxelManager } from "../modules/voxel/VoxelManager.js";
 			modelMatrix.translate(new Vector(0, 0, 0));
 
 			viewMatrix.set(cameraMatrix);
-			//viewMatrix.concatenate(modelMatrix);
 
-			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.1, 1000);
-			projectionMatrix.concatenate(viewMatrix);
+			pvMatrix = new Matrix().set(projectionMatrix).concatenate(viewMatrix);
+
+			const frustum = new Frustum(pvMatrix);
 
 			depthStencil.setDepthLoadOp("load");
-			voxelManager.render(projectionMatrix, encoder, view, depthStencil);
+			voxelManager.render(pvMatrix, encoder, view, depthStencil, frustum);
 
 			display.submitCommandEncoder(encoder);
 		};

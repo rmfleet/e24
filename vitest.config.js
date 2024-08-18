@@ -8,7 +8,8 @@ export default defineConfig({
 		include: ["src/**/*.test.ts"],
 		globals: true,
 		environment: "jsdom",
-		globalSetup: ["./tests/setup.ts"],
+		setupFiles: ["./vitest/setup.ts"],
+		globalSetup: ["./vitest/global.ts"],
 		maxConcurrency: 5,
 		coverage: {
 			enabled: false,
@@ -19,7 +20,7 @@ export default defineConfig({
 			],
 			all: true,
 			include: ["src/**/*.ts"],
-			exclude: ["src/**/*.test.ts", "**/*.d.ts"],
+			exclude: ["src/**/*.test.ts", "**/*.d.ts", "src/index.ts"],
 			statements: 0,
 			branches: 0,
 			functions: 0,

@@ -1,7 +1,7 @@
 import { DepthStencil } from "../depthstencil/DepthStencil.js";
 import { Display } from "../display/Display.js";
 import { IndirectBufferManager } from "../indirect/IndirectBufferManager.js";
-import { InstanceManager } from "../instance/InstanceManager.js";
+import { InstanceManager } from "./InstanceManager.js";
 import { Mesh } from "../mesh/Mesh.js";
 import { Shader } from "../shader/Shader.js";
 
