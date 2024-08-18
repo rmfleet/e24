@@ -2,6 +2,9 @@
 
 E24 is an experimental voxel rendering engine written in TypeScript, utilizing the WebGPU API.
 
+## Current WebGPU Support
+
+https://caniuse.com/webgpu
 
 ## Setup
 
