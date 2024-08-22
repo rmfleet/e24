@@ -35,6 +35,15 @@ export class InstanceRenderer {
 		);
 	}
 
+	public destroy(): void {
+		this.vertexBuffer.destroy();
+		this.vertexColorBuffer.destroy();
+		this.vertexTexCoordBuffer.destroy();
+		this.indexBuffer.destroy();
+		this.instanceManager.destroy();
+		this.indirectBufferManager.destroy();
+	}
+
 	public getInstanceManager(): InstanceManager {
 		return this.instanceManager;
 	}

@@ -48,9 +48,8 @@ export class Camera {
 	}
 
 	public setUpright(): void {
-		this.up.set(new Vector(0, 1, 0));
-		this.right.cross(this.up, this.view).normalize();
-		this.up.cross(this.view, this.right).normalize();
+		this.right = new Vector(0, 1, 0).cross(this.view).normalize();
+		this.up = this.view.clone().cross(this.right).normalize();
 	}
 
 	public strafe(units: number): void {
@@ -61,10 +60,8 @@ export class Camera {
 
 	public getViewMatrix(): Matrix {
 		this.view.normalize();
-		this.right.cross(this.up, this.view);
-		this.right.normalize();
-		this.up.cross(this.view, this.right);
-		this.up.normalize();
+		this.right = this.up.clone().cross(this.view).normalize();
+		this.up = this.view.clone().cross(this.right).normalize();
 
 		const matrix = new Matrix();
 		return matrix.setView(this.position, this.right, this.up, this.view);

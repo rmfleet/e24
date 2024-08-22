@@ -1,4 +1,4 @@
-import type { Matrix } from "../matrix/Matrix";
+import { Matrix } from "../matrix/Matrix.js";
 
 export class Vector {
 	x: number;
@@ -11,6 +11,13 @@ export class Vector {
 		this.z = z;
 	}
 
+	public abs (): Vector {
+		this.x = Math.abs(this.x);
+		this.y = Math.abs(this.y);
+		this.z = Math.abs(this.z);
+		return this;
+	}
+
 	public add (v: Vector): Vector {
 		this.x += v.x;
 		this.y += v.y;
@@ -18,10 +25,22 @@ export class Vector {
 		return this;
 	}
 
-	public cross(v: Vector, w: Vector): Vector {
-		const x = v.y * w.z - v.z * w.y;
-		const y = v.z * w.x - v.x * w.z;
-		const z = v.x * w.y - v.y * w.x;
+	public allLessThanOrEqual(v: Vector): boolean {
+		return this.x <= v.x && this.y <= v.y && this.z <= v.z;
+	}
+
+	public anyGreaterThan(v: Vector): boolean {
+		return this.x > v.x || this.y > v.y || this.z > v.z;
+	}
+
+	public clone(): Vector {
+		return new Vector(this.x, this.y, this.z);
+	}
+
+	public cross(v: Vector): Vector {
+		const x = this.y * v.z - this.z * v.y;
+		const y = this.z * v.x - this.x * v.z;
+		const z = this.x * v.y - this.y * v.x;
 
 		this.x = x;
 		this.y = y;
@@ -30,8 +49,23 @@ export class Vector {
 		return this;
 	}
 
+	public distance (v: Vector): number {
+		return this.clone().subtract(v).length();
+	}
+
 	public dot (v: Vector): number {
 		return this.x * v.x + this.y * v.y + this.z * v.z;
+	}
+
+	public equals (v: Vector): boolean {
+		return this.x == v.x && this.y == v.y && this.z == v.z;
+	}
+
+	public floor (): Vector {
+		this.x = Math.floor(this.x);
+		this.y = Math.floor(this.y);
+		this.z = Math.floor(this.z);
+		return this;
 	}
 
 	public isZero (): boolean {
@@ -39,11 +73,18 @@ export class Vector {
 	}
 
 	public normalize(): Vector {
-		return this.scale(this.rsqrt());
+		return this.scale(this.inverseLength());
 	}
 
-	public rsqrt (): number {
-		return 1.0 / this.sqrt();
+	public inverseLength (): number {
+		return 1.0 / this.length();
+	}
+
+	public inverseScale (s: number): Vector {
+		this.x /= s;
+		this.y /= s;
+		this.z /= s;
+		return this;
 	}
 
 	public scale (s: number): Vector {
@@ -53,7 +94,14 @@ export class Vector {
 		return this;
 	}
 
-	public sqrt (): number {
+	public subtract(v: Vector): Vector {
+		this.x -= v.x;
+		this.y -= v.y;
+		this.z -= v.z;
+		return this;
+	}
+
+	public length (): number {
 		return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 	}
 

@@ -32,8 +32,8 @@ export class Display {
 	async initialize (): Promise<void> {
 		this.device = await this.initializeDevice();
 
-		this.device.lost.then(() => {
-			console.error("device lost");
+		this.device.lost.then((info: GPUDeviceLostInfo) => {
+			console.error("device lost", info.__brand, info.message, info.reason);
 		});
 
 		this.context = this.canvas.getHTMLCanvasElement().getContext("webgpu");

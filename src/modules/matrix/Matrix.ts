@@ -1,4 +1,4 @@
-import { Vector } from "../vector/Vector";
+import { Vector } from "../vector/Vector.js";
 
 const AA = 0;
 const AB = 1;

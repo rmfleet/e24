@@ -16,6 +16,10 @@ export class MatrixBindModel {
 		});
 	}
 
+	public destroy (): void {
+		this.bindBuffer.destroy();
+	}
+
 	bind (device: GPUDevice, matrix: Matrix): void {
 		device.queue.writeBuffer(this.bindBuffer, 0, matrix.elements, 0, 16);
 	}

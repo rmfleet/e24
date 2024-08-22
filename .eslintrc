@@ -148,6 +148,7 @@
 		"GPURenderPassDepthStencilAttachment": true,
 		"GPULoadOp": true,
 		"GPUMapMode": true,
-		"GPURenderPassEncoder": true
+		"GPURenderPassEncoder": true,
+		"GPUDeviceLostInfo": true
 	}
 }

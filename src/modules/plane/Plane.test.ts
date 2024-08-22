@@ -5,7 +5,7 @@ import {
 } from "vitest";
 import { Plane } from "./Plane.js";
 
-describe("Matrix", () => {
+describe("Plane", () => {
 	it("should be able to create a new Plane", () => {
 		const plane = new Plane();
 		expect(plane).toBeDefined();

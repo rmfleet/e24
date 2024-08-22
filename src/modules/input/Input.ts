@@ -3,20 +3,26 @@ export class Input {
 	private mouse: Record<string, boolean> = {};
 	private pointerLocked: boolean = false;
 
-	constructor(public mouseMoveCallback: (x: number, y: number) => void) {
+	constructor(
+		public mouseMoveCallback: (x: number, y: number) => void,
+		public keyPressCallback: (key: string) => void
+	) {
 		this.handleKeyDown = this.handleKeyDown.bind(this);
 		this.handleKeyUp = this.handleKeyUp.bind(this);
 		this.handleMouseDown = this.handleMouseDown.bind(this);
 		this.handleMouseUp = this.handleMouseUp.bind(this);
 		this.handlePointerLockChange = this.handlePointerLockChange.bind(this);
 		this.handleMouseMove = this.handleMouseMove.bind(this);
+		this.handleKeyPress = this.handleKeyPress.bind(this);
 
+		document.addEventListener("keypress", this.handleKeyPress);
 		document.addEventListener("keydown", this.handleKeyDown);
 		document.addEventListener("keyup", this.handleKeyUp);
 		document.addEventListener("mousedown", this.handleMouseDown);
 		document.addEventListener("mouseup", this.handleMouseUp);
 		document.addEventListener("pointerlockchange", this.handlePointerLockChange);
 		document.addEventListener("mousemove", this.handleMouseMove, false);
+		document.addEventListener("fullscreenchange", this.handleFullscreenChange);
 	}
 
 	public isKeyDown (key: string): boolean {
@@ -27,9 +33,23 @@ export class Input {
 		return this.mouse[button] || false;
 	}
 
+	public isPointerLocked (): boolean {
+		return this.pointerLocked;
+	}
+
+	public toggleFullscreen(): void {
+		if (document.fullscreenElement) {
+			document.exitFullscreen();
+		} else if (document.documentElement.requestFullscreen) {
+			document.documentElement.requestFullscreen();
+		}
+	}
+
 	public requestPointerLock(): void {
 		if (document.pointerLockElement !== document.documentElement) {
-			document.documentElement.requestPointerLock();
+			if (document.documentElement.requestPointerLock) {
+				document.documentElement.requestPointerLock();
+			}
 		}
 	}
 
@@ -65,7 +85,20 @@ export class Input {
 		this.keys[event.key] = true;
 	}
 
+	private handleKeyPress (event: KeyboardEvent): void {
+		this.keyPressCallback(event.key);
+	}
+
 	private handleKeyUp (event: KeyboardEvent): void {
 		this.keys[event.key] = false;
+	}
+
+	private handleFullscreenChange (): void {
+		console.log("Fullscreen mode changed");
+		if (document.fullscreenElement) {
+			console.log("Entered fullscreen mode");
+		} else {
+			console.log("Exited fullscreen mode");
+		}
 	}
 }

@@ -11,6 +11,10 @@ export class IndirectBufferManager {
 		this.indirectBuffer = this.createIndirectBuffer();
 	}
 
+	public destroy(): void {
+		this.indirectBuffer.destroy();
+	}
+
 	public updateIndirectBuffer(instanceCount: number): void {
 		const indirectData = new Uint32Array([
 			this.numIndices,

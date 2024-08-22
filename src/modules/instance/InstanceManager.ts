@@ -22,6 +22,11 @@ export class InstanceManager {
 		this.createBuffers(initialCapacity);
 	}
 
+	public destroy(): void {
+		this.instancePositionBuffer.destroy();
+		this.stagingBuffer.destroy();
+	}
+
 	public async setInstances(positions: Vector[]): Promise<void> {
 		const requiredCapacity = positions.length * 3 * Float32Array.BYTES_PER_ELEMENT;
 

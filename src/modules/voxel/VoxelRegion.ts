@@ -8,6 +8,8 @@ import type { Shader } from "../shader/Shader";
 import type { Texture } from "../texture/Texture";
 import { Vector } from "../vector/Vector";
 import { Voxel } from "./Voxel";
+import { Frustum } from "../frustum/Frustum.js";
+import { AxisAlignedBoundingBox } from "../aabb/AxisAlignedBoundingBox.js";
 
 interface VoxelInstance {
 	renderer: InstanceRenderer;
@@ -20,10 +22,7 @@ interface VoxelEntry {
 	instance: VoxelInstance;
 }
 
-import { Frustum } from "../frustum/Frustum.js";
-import { AxisAlignedBoundingBox } from "../aabb/AxisAlignedBoundingBox.js";
-
-export interface VoxelManagerInput {
+export interface VoxelRegionInput {
 	display: Display;
 	mesh: Mesh;
 	shader: Shader;
@@ -31,7 +30,7 @@ export interface VoxelManagerInput {
 	position: Vector;
 }
 
-export class VoxelManager {
+export class VoxelRegion {
 	private matrixBindModel: MatrixBindModel;
 	private instances: VoxelInstance[];
 	private mesh: Mesh;
@@ -41,7 +40,7 @@ export class VoxelManager {
 	private position: Vector;
 
 	// eslint-disable-next-line max-params
-	constructor({ display, mesh, shader, textures, position }: VoxelManagerInput) {
+	constructor({ display, mesh, shader, textures, position }: VoxelRegionInput) {
 		this.matrixBindModel = new MatrixBindModel(display.getDevice());
 		this.instances = [];
 		this.mesh = mesh;
@@ -55,10 +54,21 @@ export class VoxelManager {
 		}
 	}
 
+	public destroy(): void {
+		this.matrixBindModel.destroy();
+		for (const instance of this.instances) {
+			instance.renderer.destroy();
+		}
+	}
+
 	public addVoxel(voxel: Voxel, voxelInstance: VoxelInstance): void {
 		voxelInstance.voxels.add(voxel);
 		this.voxelMap.set(voxel.position.toString(), { voxel, instance: voxelInstance });
 		this.bounds.expandToPoint(voxel.position);
+	}
+
+	public getPosition(): Vector {
+		return this.position;
 	}
 
 	public async initialize(): Promise<void> {
@@ -78,11 +88,11 @@ export class VoxelManager {
 		view: GPUTextureView,
 		depthStencil: DepthStencil,
 		frustum: Frustum
-	): void {
+	): boolean {
 		const aabbInside = frustum.isAxisAlignedBoxInside(this.bounds);
 
 		if (aabbInside === false) {
-			return;
+			return false;
 		}
 
 		this.matrixBindModel.bind(this.display.getDevice(), matrix);
@@ -98,19 +108,27 @@ export class VoxelManager {
 				depthStencil
 			);
 		}
+
+		return true;
 	}
 
 	private async load (): Promise<void> {
-		// Eventually this will be replaced with a call to a server to get the voxel data for the given position
-		for (let x = 0; x < 10; x++) {
-			for (let y = 0; y < 10; y++) {
-				for (let z = 0; z < 10; z++) {
-					const position = new Vector(x, y, z).add(this.position);
+		const response = await fetch(`/region/${this.position.x}/${this.position.y}/${this.position.z}`);
+		const data = await response.json();
+
+		let i = 0;
+		for (let x = 0; x < 32; x++) {
+			for (let y = 0; y < 32; y++) {
+				for (let z = 0; z < 32; z++) {
+					const instanceIndex = data[i++];
+
+					if (instanceIndex < 0) {
+						continue;
+					}
+					const position = new Vector(x, y, z).add(this.position).subtract(new Vector(16, 16, 16));
+
 					const voxel = new Voxel(position);
-
-					const instanceIndex = Math.floor(Math.random() * this.instances.length);
 					const voxelInstance = this.instances[instanceIndex];
-
 					this.addVoxel(voxel, voxelInstance);
 				}
 			}

@@ -13,8 +13,34 @@ import { Camera } from "../modules/camera/Camera.js";
 import { Mesh } from "../modules/mesh/Mesh.js";
 import { Input } from "../modules/input/Input.js";
 import { Shader } from "../modules/shader/Shader.js";
-import { VoxelManager } from "../modules/voxel/VoxelManager.js";
 import { Frustum } from "../modules/frustum/Frustum.js";
+import { VoxelSpace } from "../modules/voxel/VoxelSpace.js";
+
+let loopModel: LoopModel;
+
+declare global {
+    interface Window {
+        cmd: (command: string) => void;
+    }
+}
+
+window.cmd = function(command: string): void {
+	const parts = command.split(" ");
+	switch (parts[0]) {
+		case "pause":
+			if (parts[1] === "true") {
+
+				loopModel.pause();
+				console.info("Pausing the loop");
+			} else {
+				loopModel.resume();
+				console.info("Resuming the loop");
+			}
+			break;
+		default:
+			console.info("Unknown command");
+	}
+};
 
 (async (): Promise<void> => {
 	try {
@@ -25,13 +51,19 @@ import { Frustum } from "../modules/frustum/Frustum.js";
 		const projectionMatrix: Matrix = new Matrix();
 
 		const texture: Texture = new Texture();
-		await texture.loadTexture("/textures/wood_planks.jpg", display.getDevice());
+		await texture.loadTexture("/textures/dirt-1.webp", display.getDevice());
 
 		const texture2: Texture = new Texture();
-		await texture2.loadTexture("/textures/tiles.jpg", display.getDevice());
+		await texture2.loadTexture("/textures/grass-1.webp", display.getDevice());
 
 		const texture3: Texture = new Texture();
-		await texture3.loadTexture("/textures/rattan.jpeg", display.getDevice());
+		await texture3.loadTexture("/textures/rock-1.webp", display.getDevice());
+
+		const texture4: Texture = new Texture();
+		await texture4.loadTexture("/textures/sand-1.webp", display.getDevice());
+
+		const texture5: Texture = new Texture();
+		await texture5.loadTexture("/textures/water-1.webp", display.getDevice());
 
 		const shader: Shader = new Shader();
 		await shader.loadShader("/shaders/shader1.wgsl", display);
@@ -56,16 +88,29 @@ import { Frustum } from "../modules/frustum/Frustum.js";
 		const instanceManager1 = render.getInstanceManager();
 		await instanceManager1.setInstances(positions1);
 
-		const voxelManagerInput = {
+		//		const voxelManagerInput = {
+		//			display,
+		//			mesh,
+		//			shader,
+		//			textures: [texture, texture2, texture3],
+		//			position: new Vector(-5, -10, -5)
+		//		};
+
+
+		const voxelSpaceInput = {
 			display,
 			mesh,
 			shader,
-			textures: [texture, texture2, texture3],
-			position: new Vector(-5, -10, -5)
+			textures: [texture, texture2, texture3, texture4, texture5],
+			position: new Vector(0, 0, 0),
+			loadDistance: new Vector(64, 32, 64),
+			unloadDistance: new Vector(64, 32, 64)
 		};
 
-		const voxelManager = new VoxelManager(voxelManagerInput);
-		await voxelManager.initialize();
+		const voxelSpace = new VoxelSpace(voxelSpaceInput);
+
+		//		const voxelManager = new VoxelRegion(voxelManagerInput);
+		//		await voxelManager.initialize();
 
 
 		const modelMatrix: Matrix = new Matrix();
@@ -79,11 +124,16 @@ import { Frustum } from "../modules/frustum/Frustum.js";
 
 		const camera = new Camera();
 		camera.identity();
+		voxelSpace.setPosition(camera.position);
 
 		const input = new Input((x: number, y: number): void => {
 			camera.yaw(-x / 100);
 			if (!camera.pitchLimit(-y / 100)) {
 				camera.pitch(-y / 100);
+			}
+		}, (key: string): void => {
+			if (key === "]") {
+				input.toggleFullscreen();
 			}
 		});
 
@@ -196,6 +246,9 @@ import { Frustum } from "../modules/frustum/Frustum.js";
 			}
 
 			camera.setUpright();
+
+			voxelSpace.setPosition(camera.position);
+
 			const cameraMatrix = camera.getViewMatrix();
 
 			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.1, 1000);
@@ -231,13 +284,36 @@ import { Frustum } from "../modules/frustum/Frustum.js";
 
 			const frustum = new Frustum(pvMatrix);
 
-			depthStencil.setDepthLoadOp("load");
-			voxelManager.render(pvMatrix, encoder, view, depthStencil, frustum);
+			//depthStencil.setDepthLoadOp("load");
+
+
+			const voxelSpaceRenderInput = {
+				matrix: pvMatrix,
+				encoder,
+				view,
+				depthStencil,
+				frustum
+			};
+			voxelSpace.render(voxelSpaceRenderInput);
+			//voxelManager.render(pvMatrix, encoder, view, depthStencil, frustum);
 
 			display.submitCommandEncoder(encoder);
+
+
+
+			//	const ray = new Ray(new Vector(0, 0, 0), new Vector(1, 1, 1));
+			//	const voxel = new Voxel(new Vector(1, 1, 1));
+
+			//	const intersection = voxel.intersectsRay(ray);
+
+			//	if (intersection !== null) {
+			//		console.log(`Ray intersects voxel at distance: ${intersection}`);
+			//	} else {
+			//		console.log("Ray does not intersect voxel");
+			//	}
 		};
 
-		new LoopModel(display, appLoop, renderLoop);
+		loopModel = new LoopModel(display, appLoop, renderLoop);
 	} catch (error) {
 		console.error(error);
 		alert(error);
