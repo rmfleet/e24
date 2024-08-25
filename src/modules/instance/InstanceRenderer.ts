@@ -4,6 +4,7 @@ import { IndirectBufferManager } from "../indirect/IndirectBufferManager.js";
 import { InstanceManager } from "./InstanceManager.js";
 import { Mesh } from "../mesh/Mesh.js";
 import { Shader } from "../shader/Shader.js";
+import type { ColorAttachment } from "../colorattachment/ColorAttachment.js";
 
 export class InstanceRenderer {
 	private display: Display;
@@ -11,6 +12,7 @@ export class InstanceRenderer {
 	private vertexBuffer: GPUBuffer;
 	private vertexColorBuffer: GPUBuffer;
 	private vertexTexCoordBuffer: GPUBuffer;
+	private vertexNormalsBuffer: GPUBuffer;
 	private indexBuffer: GPUBuffer;
 	private instanceManager: InstanceManager;
 	private numIndices: number;
@@ -23,6 +25,7 @@ export class InstanceRenderer {
 		this.vertexBuffer = {} as GPUBuffer;
 		this.vertexColorBuffer = {} as GPUBuffer;
 		this.vertexTexCoordBuffer = {} as GPUBuffer;
+		this.vertexNormalsBuffer = {} as GPUBuffer;
 		this.indexBuffer = {} as GPUBuffer;
 		this.numIndices = 0;
 		this.colorLoadOp = colorLoadOp;
@@ -39,6 +42,7 @@ export class InstanceRenderer {
 		this.vertexBuffer.destroy();
 		this.vertexColorBuffer.destroy();
 		this.vertexTexCoordBuffer.destroy();
+		this.vertexNormalsBuffer.destroy();
 		this.indexBuffer.destroy();
 		this.instanceManager.destroy();
 		this.indirectBufferManager.destroy();
@@ -85,11 +89,20 @@ export class InstanceRenderer {
 			stepMode: "instance"
 		};
 
+		const vertexNormalBufferLayout: GPUVertexBufferLayout = {
+			attributes: [
+				{ shaderLocation: 4, offset: 0, format: "float32x3" }
+			],
+			arrayStride: 12,
+			stepMode: "vertex"
+		};
+
 		const vertexBufferLayouts: GPUVertexBufferLayout[] = [
 			vertexCoordBufferLayout,
 			vertexColorBufferLayout,
 			vertexTexCoordBufferLayout,
-			instancePositionBufferLayout
+			instancePositionBufferLayout,
+			vertexNormalBufferLayout
 		];
 
 		return vertexBufferLayouts;
@@ -136,6 +149,15 @@ export class InstanceRenderer {
 
 		this.numIndices = indices.length;
 		this.indirectBufferManager = new IndirectBufferManager(this.display, this.numIndices);
+	}
+
+	private initializeVertexNormalsBuffer(normals: Float32Array): void {
+		this.vertexNormalsBuffer = this.display.getDevice().createBuffer({
+			size: normals.byteLength,
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+		});
+
+		this.display.getDevice().queue.writeBuffer(this.vertexNormalsBuffer, 0, normals);
 	}
 
 	private initializeRenderPipeline(shaderModule: GPUShaderModule, bindGroupLayouts: GPUBindGroupLayout[]): void {
@@ -189,17 +211,19 @@ export class InstanceRenderer {
 		this.initializeRenderPipeline(shader.getModule(), bindGroupLayouts);
 		this.initializeVertexCoordsBuffer(mesh.vertices);
 		this.initialiizeVertexColorsBuffer(mesh.colors);
+		this.initializeVertexNormalsBuffer(mesh.normals);
 		this.initializeVertexTexCoordsBuffer(mesh.texcoords);
 		this.initializeIndexBuffer(mesh.indices);
 	}
 
 	render(
 		encoder: GPUCommandEncoder,
-		view: GPUTextureView,
 		bindGroups: GPUBindGroup[],
+		colorAttachment: ColorAttachment,
 		depthStencil: DepthStencil
 	): void {
-		const pass = encoder.beginRenderPass(this.getRenderPassDescriptor(view, depthStencil));
+		const descriptor: GPURenderPassDescriptor = this.getRenderPassDescriptor(colorAttachment, depthStencil);
+		const pass = encoder.beginRenderPass(descriptor);
 
 		pass.setPipeline(this.renderPipeline);
 
@@ -210,6 +234,7 @@ export class InstanceRenderer {
 		pass.setVertexBuffer(0, this.vertexBuffer);
 		pass.setVertexBuffer(1, this.vertexColorBuffer);
 		pass.setVertexBuffer(2, this.vertexTexCoordBuffer);
+		pass.setVertexBuffer(4, this.vertexNormalsBuffer);
 		pass.setVertexBuffer(3, this.instanceManager.getInstanceBuffer());
 		pass.setIndexBuffer(this.indexBuffer, "uint16");
 
@@ -217,13 +242,13 @@ export class InstanceRenderer {
 		pass.end();
 	}
 
-	private getRenderPassDescriptor(view: GPUTextureView, depthStencil: DepthStencil): GPURenderPassDescriptor {
-		const colorAttachments: GPURenderPassColorAttachment[] = [{
-			clearValue: [0.1, 0.2, 0.3, 1],
-			loadOp: this.colorLoadOp,
-			storeOp: "store",
-			view: view
-		}];
+	private getRenderPassDescriptor(
+		colorAttachment: ColorAttachment,
+		depthStencil: DepthStencil
+	): GPURenderPassDescriptor {
+		const colorAttachments: GPURenderPassColorAttachment[] = [
+			colorAttachment.getColorAttachment()
+		];
 
 		const renderPassDescriptor: GPURenderPassDescriptor = {
 			colorAttachments: colorAttachments,

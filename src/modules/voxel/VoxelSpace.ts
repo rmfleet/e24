@@ -1,6 +1,9 @@
+import type { Camera } from "../camera/Camera.js";
+import type { ColorAttachment } from "../colorattachment/ColorAttachment.js";
 import type { DepthStencil } from "../depthstencil/DepthStencil.js";
 import type { Display } from "../display/Display.js";
 import type { Frustum } from "../frustum/Frustum.js";
+import type { Lighting } from "../lighting/Lighting.js";
 import type { Matrix } from "../matrix/Matrix.js";
 import type { Mesh } from "../mesh/Mesh.js";
 import type { Shader } from "../shader/Shader.js";
@@ -16,12 +19,14 @@ export interface VoxelSpaceInput {
 	position: Vector;
 	loadDistance: Vector;
 	unloadDistance: Vector;
+	lighting: Lighting;
 }
 
 export interface VoxelSpaceRenderInput {
+	camera: Camera;
 	matrix: Matrix;
 	encoder: GPUCommandEncoder;
-	view: GPUTextureView;
+	colorAttachment: ColorAttachment;
 	depthStencil: DepthStencil;
 	frustum: Frustum;
 }
@@ -36,6 +41,7 @@ export class VoxelSpace {
 	private loadDistance: Vector;
 	private unloadDistance: Vector;
 	private regionSize: number = 32;
+	private lighting: Lighting;
 
 	private regionsToLoadQueue: string[] = [];
 	private isLoading: boolean = false;
@@ -48,6 +54,7 @@ export class VoxelSpace {
 		this.position = new Vector(Infinity, Infinity, Infinity);
 		this.loadDistance = input.loadDistance;
 		this.unloadDistance = input.unloadDistance;
+		this.lighting = input.lighting;
 		this.setPosition(input.position);
 	}
 
@@ -61,10 +68,10 @@ export class VoxelSpace {
 	}
 
 	public render(input: VoxelSpaceRenderInput): void {
+		this.setPosition(input.camera.position);
 		let renderCount = 0;
 		for (const region of this.voxelRegions.values()) {
-			input.depthStencil.setDepthLoadOp("load");
-			if (region.render(input.matrix, input.encoder, input.view, input.depthStencil, input.frustum)) {
+			if (region.render(input.matrix, input.encoder, input.colorAttachment, input.depthStencil, input.frustum)) {
 				renderCount++;
 			}
 		}
@@ -89,7 +96,8 @@ export class VoxelSpace {
 				mesh: this.mesh,
 				shader: this.shader,
 				textures: this.textures,
-				position: regionCenter
+				position: regionCenter,
+				lighting: this.lighting
 			};
 
 			const newRegion = new VoxelRegion(voxelRegionInput);
@@ -104,22 +112,24 @@ export class VoxelSpace {
 		const regionsToLoad: Set<string> = new Set();
 		const regionsToUnload: Set<string> = new Set(this.voxelRegions.keys());
 
+		const scaledLoadDistance = this.loadDistance.clone().inverseScale(this.regionSize).scale(this.regionSize);
+		const halfRegionSize = this.regionSize / 2;
+
 		const currentRegion = this.position.clone()
 			.inverseScale(this.regionSize)
 			.floor()
 			.scale(this.regionSize)
-			.add(new Vector(1, 1, 1).scale(this.regionSize / 2));
+			.addScalar(halfRegionSize);
 
-		for (let x = currentRegion.x - Math.floor(this.loadDistance.x / this.regionSize) * this.regionSize;
-			x <= currentRegion.x + Math.floor(this.loadDistance.x / this.regionSize) * this.regionSize;
-			x += this.regionSize) {
-			for (let y = currentRegion.y - Math.floor(this.loadDistance.y / this.regionSize) * this.regionSize;
-				y <= currentRegion.y + Math.floor(this.loadDistance.y / this.regionSize) * this.regionSize;
-				y += this.regionSize) {
-				for (let z = currentRegion.z - Math.floor(this.loadDistance.z / this.regionSize) * this.regionSize;
-					z <= currentRegion.z + Math.floor(this.loadDistance.z / this.regionSize) * this.regionSize;
-					z += this.regionSize) {
+		const regionElement = document.getElementById("region") as HTMLElement;
+		regionElement.textContent = `Region: ${currentRegion.toString()}`;
 
+		const start = currentRegion.clone().subtract(scaledLoadDistance);
+		const end = currentRegion.clone().add(scaledLoadDistance);
+
+		for (let x = start.x; x <= end.x; x += this.regionSize) {
+			for (let y = start.y; y <= end.y; y += this.regionSize) {
+				for (let z = start.z; z <= end.z; z += this.regionSize) {
 					const regionCenter = new Vector(x, y, z);
 					const distance = this.position.clone().subtract(regionCenter).abs();
 

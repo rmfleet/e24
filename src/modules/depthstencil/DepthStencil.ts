@@ -2,31 +2,42 @@ import type { Canvas } from "../canvas/Canvas.js";
 
 export class DepthStencil {
 	private depthTexture: GPUTexture;
-	private depthLoadOp: GPULoadOp;
+	private view: GPUTextureView;
+	public clearFlag: boolean = true;
 
-	constructor(device: GPUDevice, canvas: Canvas, depthLoadOp: GPULoadOp) {
+	constructor(device: GPUDevice, canvas: Canvas) {
 		window.addEventListener("resize", () => {
 			this.depthTexture = this.createDepthTexture(device, canvas);
-			this.setDepthLoadOp(depthLoadOp);
+			this.createView();
 		});
 
 		this.depthTexture = this.createDepthTexture(device, canvas);
-		this.depthLoadOp = depthLoadOp;
+		this.view = this.createView();
+	}
+
+	public clear(): void {
+		this.clearFlag = true;
+	}
+
+	public createView(): GPUTextureView {
+		return this.view = this.depthTexture.createView();
+	}
+
+	public destroy(): void {
+		this.depthTexture.destroy();
 	}
 
 	getDepthStencilAttachment(): GPURenderPassDepthStencilAttachment {
 		const depthStencilAttachment: GPURenderPassDepthStencilAttachment = {
-			view: this.depthTexture.createView(),
+			view: this.view,
 			depthClearValue: 1.0,
-			depthLoadOp: this.depthLoadOp,
+			depthLoadOp: this.clearFlag ? "clear" : "load",
 			depthStoreOp: "store"
 		};
 
-		return depthStencilAttachment;
-	}
+		this.clearFlag = false;
 
-	setDepthLoadOp(depthLoadOp: GPULoadOp): void {
-		this.depthLoadOp = depthLoadOp;
+		return depthStencilAttachment;
 	}
 
 	private createDepthTexture(device: GPUDevice, canvas: Canvas): GPUTexture {

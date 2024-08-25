@@ -15,6 +15,8 @@ import { Input } from "../modules/input/Input.js";
 import { Shader } from "../modules/shader/Shader.js";
 import { Frustum } from "../modules/frustum/Frustum.js";
 import { VoxelSpace } from "../modules/voxel/VoxelSpace.js";
+import { Lighting } from "../modules/lighting/Lighting.js";
+import { ColorAttachment } from "../modules/colorattachment/ColorAttachment.js";
 
 let loopModel: LoopModel;
 
@@ -71,11 +73,14 @@ window.cmd = function(command: string): void {
 		const mesh = new Mesh();
 		await mesh.loadFromUrl("/meshes/cube.json");
 
+		const lighting: Lighting = new Lighting(display.getDevice());
+
 		const matrixBindModel1: MatrixBindModel = new MatrixBindModel(display.getDevice());
 		const render = new InstanceRenderer(display, "clear");
 		render.initialize([
 			matrixBindModel1.getBindGroupLayout(),
-			texture.getBindGroupLayout()
+			texture.getBindGroupLayout(),
+			lighting.getBindGroupLayout()
 		], mesh, shader);
 
 		const positions1: Vector[] = [
@@ -104,23 +109,23 @@ window.cmd = function(command: string): void {
 			textures: [texture, texture2, texture3, texture4, texture5],
 			position: new Vector(0, 0, 0),
 			loadDistance: new Vector(64, 32, 64),
-			unloadDistance: new Vector(64, 32, 64)
+			unloadDistance: new Vector(64, 32, 64),
+			lighting: lighting
 		};
 
 		const voxelSpace = new VoxelSpace(voxelSpaceInput);
 
-		//		const voxelManager = new VoxelRegion(voxelManagerInput);
-		//		await voxelManager.initialize();
-
-
 		const modelMatrix: Matrix = new Matrix();
 		const viewMatrix: Matrix = new Matrix();
 
+		const colorAttachment: ColorAttachment = new ColorAttachment(display);
+
 		const depthStencil: DepthStencil = new DepthStencil(
 			display.getDevice(),
-			canvas,
-			"clear"
+			canvas
 		);
+
+		depthStencil.createView();
 
 		const camera = new Camera();
 		camera.identity();
@@ -251,7 +256,37 @@ window.cmd = function(command: string): void {
 
 			const cameraMatrix = camera.getViewMatrix();
 
-			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.1, 1000);
+			projectionMatrix.setPerspective(degreeToRadian(60), canvas.getAspectRatio(), 0.01, 48);
+
+			const encoder: GPUCommandEncoder = display.createCommandEncoder();
+
+			colorAttachment.createView();
+			colorAttachment.clear();
+			depthStencil.clear();
+
+
+
+			modelMatrix.setRotation(new Vector(0, 0, 0), 0);
+			modelMatrix.translate(new Vector(0, 0, 0));
+
+			viewMatrix.set(cameraMatrix);
+			viewMatrix.concatenate(modelMatrix);
+
+			const pvMatrix2 = new Matrix().set(projectionMatrix).concatenate(viewMatrix);
+
+			const frustum = new Frustum(pvMatrix2);
+
+			const voxelSpaceRenderInput = {
+				camera: camera,
+				matrix: pvMatrix2,
+				encoder,
+				colorAttachment,
+				depthStencil,
+				frustum
+			};
+			voxelSpace.render(voxelSpaceRenderInput);
+
+
 
 			// Render the rotating cubes
 			modelMatrix.setRotation(new Vector(0, 1, 0), rotationY);
@@ -261,41 +296,21 @@ window.cmd = function(command: string): void {
 			viewMatrix.set(cameraMatrix);
 			viewMatrix.concatenate(modelMatrix);
 
-			let pvMatrix = new Matrix().set(projectionMatrix).concatenate(viewMatrix);
+			const pvMatrix1 = new Matrix().set(projectionMatrix).concatenate(viewMatrix);
 
-			matrixBindModel1.bind(display.getDevice(), pvMatrix);
+			matrixBindModel1.bind(display.getDevice(), pvMatrix1);
 
-			const encoder: GPUCommandEncoder = display.createCommandEncoder();
-			const view: GPUTextureView = display.createView();
 
-			depthStencil.setDepthLoadOp("clear");
-			render.render(encoder, view, [
+
+			render.render(encoder, [
 				matrixBindModel1.getBindGroup(),
-				texture.getBindGroup()
-			], depthStencil);
-
-			// Render the voxel manager
-			modelMatrix.setRotation(new Vector(0, 0, 0), 0);
-			modelMatrix.translate(new Vector(0, 0, 0));
-
-			viewMatrix.set(cameraMatrix);
-
-			pvMatrix = new Matrix().set(projectionMatrix).concatenate(viewMatrix);
-
-			const frustum = new Frustum(pvMatrix);
-
-			//depthStencil.setDepthLoadOp("load");
+				texture.getBindGroup(),
+				lighting.getBindGroup()
+			], colorAttachment, depthStencil);
 
 
-			const voxelSpaceRenderInput = {
-				matrix: pvMatrix,
-				encoder,
-				view,
-				depthStencil,
-				frustum
-			};
-			voxelSpace.render(voxelSpaceRenderInput);
-			//voxelManager.render(pvMatrix, encoder, view, depthStencil, frustum);
+
+
 
 			display.submitCommandEncoder(encoder);
 

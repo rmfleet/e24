@@ -7,9 +7,14 @@ import { InstanceRenderer } from "../instance/InstanceRenderer";
 import type { Shader } from "../shader/Shader";
 import type { Texture } from "../texture/Texture";
 import { Vector } from "../vector/Vector";
-import { Voxel } from "./Voxel";
+import {
+	Voxel,
+	VoxelType
+} from "./Voxel";
 import { Frustum } from "../frustum/Frustum.js";
 import { AxisAlignedBoundingBox } from "../aabb/AxisAlignedBoundingBox.js";
+import type { Lighting } from "../lighting/Lighting";
+import type { ColorAttachment } from "../colorattachment/ColorAttachment";
 
 interface VoxelInstance {
 	renderer: InstanceRenderer;
@@ -28,6 +33,7 @@ export interface VoxelRegionInput {
 	shader: Shader;
 	textures: Texture[];
 	position: Vector;
+	lighting: Lighting;
 }
 
 export class VoxelRegion {
@@ -38,9 +44,9 @@ export class VoxelRegion {
 	private voxelMap: Map<string, VoxelEntry>;
 	private bounds: AxisAlignedBoundingBox;
 	private position: Vector;
+	private lighting: Lighting;
 
-	// eslint-disable-next-line max-params
-	constructor({ display, mesh, shader, textures, position }: VoxelRegionInput) {
+	constructor({ display, mesh, shader, textures, position, lighting }: VoxelRegionInput) {
 		this.matrixBindModel = new MatrixBindModel(display.getDevice());
 		this.instances = [];
 		this.mesh = mesh;
@@ -48,9 +54,10 @@ export class VoxelRegion {
 		this.voxelMap = new Map();
 		this.bounds = new AxisAlignedBoundingBox();
 		this.position = position;
+		this.lighting = lighting;
 
 		for (const texture of textures) {
-			this.createInstanceRenderer(shader, texture);
+			this.createInstanceRenderer(shader, texture, lighting);
 		}
 	}
 
@@ -85,10 +92,14 @@ export class VoxelRegion {
 	public render(
 		matrix: Matrix,
 		encoder: GPUCommandEncoder,
-		view: GPUTextureView,
+		colorAttachment: ColorAttachment,
 		depthStencil: DepthStencil,
 		frustum: Frustum
 	): boolean {
+		if (this.instances.length === 0) {
+			return false;
+		}
+
 		const aabbInside = frustum.isAxisAlignedBoxInside(this.bounds);
 
 		if (aabbInside === false) {
@@ -100,11 +111,12 @@ export class VoxelRegion {
 		for (const instance of this.instances) {
 			instance.renderer.render(
 				encoder,
-				view,
 				[
 					this.matrixBindModel.getBindGroup(),
-					instance.texture.getBindGroup()
+					instance.texture.getBindGroup(),
+					this.lighting.getBindGroup()
 				],
+				colorAttachment,
 				depthStencil
 			);
 		}
@@ -113,34 +125,35 @@ export class VoxelRegion {
 	}
 
 	private async load (): Promise<void> {
-		const response = await fetch(`/region/${this.position.x}/${this.position.y}/${this.position.z}`);
+		const response = await fetch(`/region?x=${this.position.x}&y=${this.position.y}&z=${this.position.z}`);
 		const data = await response.json();
 
 		let i = 0;
 		for (let x = 0; x < 32; x++) {
 			for (let y = 0; y < 32; y++) {
 				for (let z = 0; z < 32; z++) {
-					const instanceIndex = data[i++];
+					const voxelType: VoxelType = data[i++];
 
-					if (instanceIndex < 0) {
+					if (voxelType < 0) {
 						continue;
 					}
 					const position = new Vector(x, y, z).add(this.position).subtract(new Vector(16, 16, 16));
 
-					const voxel = new Voxel(position);
-					const voxelInstance = this.instances[instanceIndex];
+					const voxel = new Voxel(position, voxelType);
+					const voxelInstance = this.instances[voxelType];
 					this.addVoxel(voxel, voxelInstance);
 				}
 			}
 		}
 	}
 
-	private createInstanceRenderer(shader: Shader, texture: Texture): void {
+	private createInstanceRenderer(shader: Shader, texture: Texture, lighting: Lighting): void {
 		const instanceRenderer = new InstanceRenderer(this.display, "load");
 
 		instanceRenderer.initialize([
 			this.matrixBindModel.getBindGroupLayout(),
-			texture.getBindGroupLayout()
+			texture.getBindGroupLayout(),
+			lighting.getBindGroupLayout()
 		], this.mesh, shader);
 
 		this.instances.push({
@@ -161,7 +174,12 @@ export class VoxelRegion {
 		];
 
 		for (const neighbor of neighbors) {
-			if (!this.voxelMap.has(neighbor.toString())) {
+			const entry = this.voxelMap.get(neighbor.toString());
+			if (entry === undefined) {
+				return false;
+			}
+
+			if (entry?.voxel.isTransparent()) {
 				return false;
 			}
 		}

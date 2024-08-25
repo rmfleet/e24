@@ -8,64 +8,59 @@ import path from "path";
 import { Vector } from "../vector/Vector.js";
 
 import { createNoise3D } from "simplex-noise";
+import { VoxelType } from "../voxel/Voxel.js";
 
+const seed = 0;
 
+const noise3D = createNoise3D(() => seed);
 
-const noise3D = createNoise3D();
-
-function generateBaseHeight(x: number, z: number): number {
+function generateBaseHeight(v: Vector): number {
 	const frequency = 0.01;
 	const amplitude = 20;
-	const baseNoiseValue = noise3D(x * frequency, 0, z * frequency);
+	const baseNoiseValue = noise3D(v.x * frequency, 0, v.z * frequency);
 	return baseNoiseValue * amplitude;
 }
 
-function generateDetailHeight(x: number, z: number): number {
-	const frequency = 0.05;  // Higher frequency for smaller features
-	const amplitude = 5;     // Smaller amplitude for detail
-	const detailNoiseValue = noise3D(x * frequency, 100, z * frequency);
+function generateDetailHeight(v: Vector): number {
+	const frequency = 0.025;
+	const amplitude = 5;
+	const detailNoiseValue = noise3D(v.x * frequency, 100, v.z * frequency);
 	return detailNoiseValue * amplitude;
 }
 
-function classifyVoxel(globalX: number, globalY: number, globalZ: number, baseHeight: number, detailHeight: number): number {
-	const seaLevel = 0; // Define the sea level height inside the function
+function classifyVoxel(global: Vector, baseHeight: number, detailHeight: number): number {
+	const seaLevel = 0;
 	const totalHeight = baseHeight + detailHeight;
 	const dirtDepth = 4;
 
-	// Stone layer for lower regions
-	if (globalY < totalHeight - dirtDepth) {
-		return 2; // Stone
+	if (global.y < totalHeight - dirtDepth) {
+		return VoxelType.Stone;
 	}
 
-	// Water layer at or below sea level but above the terrain
-	if (globalY <= seaLevel && globalY > totalHeight) {
-		return 4; // Water
+	if (global.y <= seaLevel && global.y > totalHeight) {
+		return VoxelType.Water;
 	}
 
-	// Transition zone near sea level
-	const sandTransitionStart = seaLevel - 2; // Where sand starts appearing
-	const sandTransitionEnd = seaLevel + 1;   // Just above sea level
+	const sandTransitionStart = seaLevel - 2;
+	const sandTransitionEnd = seaLevel + 1;
 
-	if (globalY >= sandTransitionStart && globalY <= sandTransitionEnd) {
-		if (globalY > totalHeight) {
-			return 4; // Shallow Water
-		} else if (globalY >= totalHeight - 1) {
-			return 3; // Sand
+	if (global.y >= sandTransitionStart && global.y <= sandTransitionEnd) {
+		if (global.y > totalHeight) {
+			return VoxelType.Water;
+		} else if (global.y >= totalHeight - 1) {
+			return VoxelType.Sand;
 		}
 	}
 
-	// Grass on top
-	if (globalY === Math.floor(totalHeight)) {
-		return 1; // Grass
+	if (global.y === Math.floor(totalHeight)) {
+		return VoxelType.Grass;
 	}
 
-	// Dirt below grass
-	if (globalY > totalHeight - dirtDepth && globalY < totalHeight) {
-		return 0; // Dirt
+	if (global.y > totalHeight - dirtDepth && global.y < totalHeight) {
+		return VoxelType.Dirt;
 	}
 
-	// Default to air above terrain
-	return -1; // Air
+	return VoxelType.Air;
 }
 
 
@@ -76,26 +71,22 @@ export class Server {
 		this.expressServer = express();
 		this.expressServer.use(express.static(path.resolve(process.cwd(), "dist", "public")));
 
-		this.expressServer.get("/region/:x/:y/:z", (request: Request, response: Response) => {
+		this.expressServer.get("/region", (request: Request, response: Response) => {
 			const regionPosition = new Vector(
-				parseInt(request.params.x),
-				parseInt(request.params.y),
-				parseInt(request.params.z)
+				parseInt(request.query.x as string),
+				parseInt(request.query.y as string),
+				parseInt(request.query.z as string)
 			);
 
 			const data: number[] = [];
 			for (let x = 0; x < 32; x++) {
 				for (let y = 0; y < 32; y++) {
 					for (let z = 0; z < 32; z++) {
-						const globalX = regionPosition.x + x;
-						const globalY = regionPosition.y + y;
-						const globalZ = regionPosition.z + z;
+						const global = new Vector(x, y, z).add(regionPosition);
+						const baseHeight = generateBaseHeight(global);
+						const detailHeight = generateDetailHeight(global);
 
-						const baseHeight = generateBaseHeight(globalX, globalZ);
-						const detailHeight = generateDetailHeight(globalX, globalZ);
-
-						// Classify the voxel based on combined height data
-						const voxelType = classifyVoxel(globalX, globalY, globalZ, baseHeight, detailHeight);
+						const voxelType = classifyVoxel(global, baseHeight, detailHeight);
 						data.push(voxelType);
 					}
 				}

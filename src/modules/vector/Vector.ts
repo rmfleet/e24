@@ -25,6 +25,13 @@ export class Vector {
 		return this;
 	}
 
+	public addScalar(scalar: number): Vector {
+		this.x += scalar;
+		this.y += scalar;
+		this.z += scalar;
+		return this;
+	}
+
 	public allLessThanOrEqual(v: Vector): boolean {
 		return this.x <= v.x && this.y <= v.y && this.z <= v.z;
 	}

@@ -156,4 +156,12 @@ describe("Vector", () => {
 		const other = new Vector(4, 5, 6);
 		expect(vector.anyGreaterThan(other)).toBe(false);
 	});
+
+	it("should be able to scaler add a Vector", () => {
+		const vector = new Vector(1, 2, 3);
+		vector.addScalar(2);
+		expect(vector.x).toBe(3);
+		expect(vector.y).toBe(4);
+		expect(vector.z).toBe(5);
+	});
 });

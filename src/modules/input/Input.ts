@@ -94,11 +94,5 @@ export class Input {
 	}
 
 	private handleFullscreenChange (): void {
-		console.log("Fullscreen mode changed");
-		if (document.fullscreenElement) {
-			console.log("Entered fullscreen mode");
-		} else {
-			console.log("Exited fullscreen mode");
-		}
 	}
 }

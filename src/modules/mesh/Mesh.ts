@@ -4,6 +4,7 @@ interface MeshData {
 	colors: Float32Array;
 	texcoords: Float32Array;
 	indices: Uint16Array;
+	normals: Float32Array;
 }
 
 export class Mesh implements MeshData {
@@ -12,6 +13,7 @@ export class Mesh implements MeshData {
 	colors: Float32Array;
 	texcoords: Float32Array;
 	indices: Uint16Array;
+	normals: Float32Array;
 
 	constructor(meshData: MeshData | undefined = undefined) {
 		this.version = meshData?.version || 0;
@@ -19,6 +21,7 @@ export class Mesh implements MeshData {
 		this.colors = meshData?.colors || new Float32Array();
 		this.texcoords = meshData?.texcoords || new Float32Array();
 		this.indices = meshData?.indices || new Uint16Array();
+		this.normals = meshData?.normals || new Float32Array();
 	}
 
 	async loadFromUrl(url: string): Promise<void> {
@@ -34,6 +37,7 @@ export class Mesh implements MeshData {
 		this.colors = new Float32Array(meshData.colors);
 		this.texcoords = new Float32Array(meshData.texcoords);
 		this.indices = new Uint16Array(meshData.indices);
+		this.normals = new Float32Array(meshData.normals);
 	}
 }
 
